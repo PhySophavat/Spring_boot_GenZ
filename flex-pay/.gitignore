@@ -1,0 +1,23 @@
+# Maven / Java
+target/
+*.class
+
+# Bundled local Maven downloads
+.mvn/apache-maven-3.9.9/
+.mvn/downloads/
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.tsbuildinfo
+
+# Logs
+*.log
+frontend/*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
