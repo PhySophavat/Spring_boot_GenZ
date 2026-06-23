@@ -3,6 +3,7 @@ package com.ewallet.auth.service;
 import com.ewallet.auth.dto.AuthResponse;
 import com.ewallet.auth.dto.LoginRequest;
 import com.ewallet.auth.dto.RegisterRequest;
+import com.ewallet.common.security.JwtService;
 import com.ewallet.users.dto.UserRegistrationRequest;
 import com.ewallet.users.dto.UserResponse;
 import com.ewallet.users.entity.User;
@@ -21,15 +22,18 @@ public class AuthService {
     private final UserService userService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public AuthService(
         UserService userService,
         UserRepository userRepository,
-        PasswordEncoder passwordEncoder
+        PasswordEncoder passwordEncoder,
+        JwtService jwtService
     ) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -41,7 +45,14 @@ public class AuthService {
                 request.password()
             )
         );
-        return new AuthResponse("Register successful", user);
+        String accessToken = jwtService.generateToken(user.phone());
+        return new AuthResponse(
+            "Register successful",
+            accessToken,
+            "Bearer",
+            jwtService.getExpirationMs(),
+            user
+        );
     }
 
     @Transactional(readOnly = true)
@@ -61,6 +72,13 @@ public class AuthService {
             user.getCreatedAt()
         );
 
-        return new AuthResponse("Login successful", response);
+        String accessToken = jwtService.generateToken(user.getPhone());
+        return new AuthResponse(
+            "Login successful",
+            accessToken,
+            "Bearer",
+            jwtService.getExpirationMs(),
+            response
+        );
     }
 }

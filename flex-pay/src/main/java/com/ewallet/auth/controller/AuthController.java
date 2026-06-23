@@ -5,6 +5,7 @@ import com.ewallet.auth.dto.LoginRequest;
 import com.ewallet.auth.dto.RegisterRequest;
 import com.ewallet.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Register and login with phone number and password")
+@SecurityRequirements
 public class AuthController {
 
     private final AuthService authService;
