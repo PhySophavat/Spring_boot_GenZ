@@ -12,6 +12,7 @@ import {
 interface User {
   id: number;
   fullName: string;
+  phone: string;
   email: string;
   createdAt: string;
 }
@@ -183,6 +184,9 @@ function App() {
                       Full Name
                     </th>
                     <th className="px-4 py-4 text-left text-[11px] uppercase tracking-[0.26em] text-[var(--muted-foreground)]">
+                      Phone
+                    </th>
+                    <th className="px-4 py-4 text-left text-[11px] uppercase tracking-[0.26em] text-[var(--muted-foreground)]">
                       Email
                     </th>
                     <th className="px-4 py-4 text-left text-[11px] uppercase tracking-[0.26em] text-[var(--muted-foreground)]">
@@ -193,7 +197,7 @@ function App() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-10">
+                      <td colSpan={5} className="px-4 py-10">
                         <div className="flex items-center justify-center gap-2 text-[var(--muted-foreground)]">
                           <LoaderCircle className="h-4 w-4 animate-spin" />
                           Loading users...
@@ -203,7 +207,7 @@ function App() {
                   ) : users.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={4}
+                        colSpan={5}
                         className="px-4 py-10 text-center text-sm text-[var(--muted-foreground)]"
                       >
                         No user records found.
@@ -211,11 +215,14 @@ function App() {
                     </tr>
                   ) : (
                     users.map((user) => (
-                      <tr key={user.id} className="border-t border-[var(--border)]">
-                        <td className="px-4 py-4 text-sm">#{user.id}</td>
-                        <td className="px-4 py-4 text-sm">{user.fullName}</td>
-                        <td className="px-4 py-4 text-sm">{user.email}</td>
-                        <td className="px-4 py-4 text-sm">{formatDate(user.createdAt)}</td>
+                      <tr key={user.id} className="border-t border-[var(--border)] hover:bg-[var(--muted)]/40 transition-colors">
+                        <td className="px-4 py-4 text-sm font-mono text-[var(--muted-foreground)]">
+                          #{user.id}
+                        </td>
+                        <td className="px-4 py-4 text-sm font-medium">{user.fullName}</td>
+                        <td className="px-4 py-4 text-sm">{user.phone ?? "—"}</td>
+                        <td className="px-4 py-4 text-sm text-[var(--muted-foreground)]">{user.email ?? "—"}</td>
+                        <td className="px-4 py-4 text-sm text-[var(--muted-foreground)]">{formatDate(user.createdAt)}</td>
                       </tr>
                     ))
                   )}
@@ -229,11 +236,27 @@ function App() {
   );
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short"
-  }).format(new Date(value));
+function formatDate(value: string | unknown) {
+  // Handle Jackson numeric-array format: [year, month, day, hour, minute, second, nano]
+  if (Array.isArray(value)) {
+    const [year, month, day, hour = 0, minute = 0, second = 0] = value as number[];
+    const d = new Date(year, month - 1, day, hour, minute, second);
+    return new Intl.DateTimeFormat("en-GB", {
+      dateStyle: "medium",
+      timeStyle: "short"
+    }).format(d);
+  }
+  // Handle ISO-8601 string (when write-dates-as-timestamps=false)
+  if (typeof value === "string" && value) {
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) {
+      return new Intl.DateTimeFormat("en-GB", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }).format(d);
+    }
+  }
+  return String(value ?? "—");
 }
 
 export default App;
