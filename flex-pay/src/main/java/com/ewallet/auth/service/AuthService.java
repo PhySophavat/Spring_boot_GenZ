@@ -1,15 +1,17 @@
 package com.ewallet.auth.service;
 
-import com.ewallet.auth.dto.AuthResponse;
-import com.ewallet.auth.dto.LoginRequest;
-import com.ewallet.auth.dto.RegisterRequest;
+import com.ewallet.auth.dto.*;
 import com.ewallet.common.security.JwtService;
-import com.ewallet.users.dto.UserRegistrationRequest;
-import com.ewallet.users.dto.UserResponse;
-import com.ewallet.users.entity.User;
-import com.ewallet.users.repository.UserRepository;
-import com.ewallet.users.service.UserService;
+import com.ewallet.user.dto.UserRegistrationRequest;
+import com.ewallet.user.dto.UserResponse;
+import com.ewallet.user.dto.UserWithWalletResponse;
+import com.ewallet.user.entity.User;
+import com.ewallet.user.repository.UserRepository;
+import com.ewallet.user.service.UserService;
+import com.ewallet.wallet.entity.Wallet;
+import com.ewallet.wallet.service.WalletService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,65 +22,127 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthService {
 
     private final UserService userService;
+    private final WalletService walletService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
     public AuthService(
         UserService userService,
+        WalletService walletService,
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
         JwtService jwtService
     ) {
         this.userService = userService;
+        this.walletService = walletService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
     public AuthResponse register(RegisterRequest request) {
-        UserResponse user = userService.createUser(
+        if (!request.password().equals(request.confirmPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwords do not match");
+        }
+
+        UserResponse userResponse = userService.createUser(
             new UserRegistrationRequest(
                 request.fullName(),
-                request.phone(),
-                null,
-                request.password()
+                request.phoneNumber(),
+                request.email(),
+                request.password(),
+                request.confirmPassword()
             )
         );
-        String accessToken = jwtService.generateToken(user.phone());
+
+        Wallet wallet = walletService.createWalletForUser(userResponse.id());
+        
+        UserWithWalletResponse userWithWallet = new UserWithWalletResponse(
+            userResponse.id(),
+            userResponse.fullName(),
+            userResponse.phoneNumber(),
+            userResponse.email(),
+            userResponse.createdAt(),
+            wallet.getId(),
+            wallet.getWalletId(),
+            wallet.getWalletNumber(),
+            false
+        );
+
+        String accessToken = jwtService.generateToken(userResponse.phoneNumber());
         return new AuthResponse(
-            "Register successful",
+            "Registration successful",
             accessToken,
             "Bearer",
             jwtService.getExpirationMs(),
-            user
+            userWithWallet
         );
     }
 
-    @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByPhone(request.phone().trim())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid phone or password"));
+        User user = userRepository.findByPhoneNumber(request.phoneNumber().trim())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid phone number or password"));
 
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid phone or password");
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid phone number or password");
         }
 
-        UserResponse response = new UserResponse(
+        if (!"ACTIVE".equals(user.getAccountStatus())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is not active");
+        }
+
+        // Do NOT allow money transfers until PIN is verified.
+        // Therefore, we reset the pinVerified flag to false on login.
+        user.setPinVerified(false);
+        userRepository.save(user);
+
+        Wallet wallet = walletService.createWalletForUser(user.getId());
+        UserWithWalletResponse userWithWallet = new UserWithWalletResponse(
             user.getId(),
             user.getFullName(),
-            user.getPhone(),
+            user.getPhoneNumber(),
             user.getEmail(),
-            user.getCreatedAt()
+            user.getCreatedAt(),
+            wallet.getId(),
+            wallet.getWalletId(),
+            wallet.getWalletNumber(),
+            Boolean.TRUE.equals(user.getPinCreated())
         );
 
-        String accessToken = jwtService.generateToken(user.getPhone());
+        String accessToken = jwtService.generateToken(user.getPhoneNumber());
         return new AuthResponse(
             "Login successful",
             accessToken,
             "Bearer",
             jwtService.getExpirationMs(),
-            response
+            userWithWallet
         );
+    }
+
+    public void createPin(Authentication authentication, String pin, String confirmPin) {
+        User user = getAuthenticatedUser(authentication);
+        walletService.createPin(user.getId(), pin, confirmPin);
+    }
+
+    public PinVerificationResponse verifyPin(Authentication authentication, String pin) {
+        User user = getAuthenticatedUser(authentication);
+        boolean valid = walletService.verifyPin(user.getId(), pin);
+        return new PinVerificationResponse(valid, valid ? "PIN verified successfully" : "Invalid PIN");
+    }
+
+    public void changePin(Authentication authentication, String currentPin, String newPin, String confirmPin) {
+        User user = getAuthenticatedUser(authentication);
+        walletService.changePin(user.getId(), currentPin, newPin, confirmPin);
+    }
+
+    private User getAuthenticatedUser(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        User principal = (User) authentication.getPrincipal();
+        // Reload user from DB to keep hibernate session active and fields fresh
+        return userRepository.findById(principal.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Authenticated user not found"));
     }
 }

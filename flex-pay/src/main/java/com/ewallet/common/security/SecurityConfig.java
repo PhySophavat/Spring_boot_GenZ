@@ -28,13 +28,13 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exception -> exception.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/api/auth/**",
-                    "/v3/api-docs/**",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html"
-                ).permitAll()
+                .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/api/wallet/me", "/api/wallets/me").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/wallets").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/wallets/*/set-pin").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

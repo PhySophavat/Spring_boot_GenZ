@@ -56,16 +56,15 @@
   html,
   body,
   #root {
-    min-height: 100%;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
   body {
-    margin: 0;
     min-width: 320px;
-    background:
-      radial-gradient(circle at top left, rgba(61, 217, 180, 0.14), transparent 26%),
-      radial-gradient(circle at top right, rgba(124, 159, 255, 0.14), transparent 22%),
-      linear-gradient(180deg, color-mix(in srgb, var(--background) 94%, white) 0%, var(--background) 100%);
+    background: var(--background);
     color: var(--foreground);
   }
 

@@ -1,0 +1,14 @@
+package com.ewallet.wallet.service;
+
+import com.ewallet.wallet.dto.WalletResponse;
+import com.ewallet.wallet.entity.Wallet;
+import java.util.List;
+
+public interface WalletService {
+    WalletResponse getWallet(Long userId);
+    List<WalletResponse> getAllWallets();
+    Wallet createWalletForUser(Long userId);
+    void createPin(Long userId, String pin, String confirmPin);
+    boolean verifyPin(Long userId, String pin);
+    void changePin(Long userId, String currentPin, String newPin, String confirmPin);
+}

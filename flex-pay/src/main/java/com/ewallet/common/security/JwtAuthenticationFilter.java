@@ -1,7 +1,7 @@
 package com.ewallet.common.security;
 
-import com.ewallet.users.entity.User;
-import com.ewallet.users.repository.UserRepository;
+import com.ewallet.user.entity.User;
+import com.ewallet.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String phone = jwtService.extractSubject(token);
 
         if (phone != null && jwtService.isTokenValid(token)) {
-            User user = userRepository.findByPhone(phone).orElse(null);
+            User user = userRepository.findByPhoneNumber(phone).orElse(null);
 
             if (user != null) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
