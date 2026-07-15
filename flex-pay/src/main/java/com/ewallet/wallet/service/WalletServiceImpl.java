@@ -67,16 +67,14 @@ public class WalletServiceImpl implements WalletService {
 
         return walletRepository.findByUserId(userId)
                 .orElseGet(() -> {
+                    String walletNumber = generateUniqueWalletNumber();
                     Wallet wallet = new Wallet();
                     wallet.setUser(user);
-                    wallet.setWalletNumber(generateUniqueWalletNumber());
+                    wallet.setWalletNumber(walletNumber);
+                    wallet.setWalletId("FW" + walletNumber);
                     wallet.setBalance(BigDecimal.ZERO);
                     wallet.setCurrency("USD");
                     wallet.setStatus("ACTIVE");
-                    wallet.setWalletId("PENDING");
-
-                    wallet = walletRepository.save(wallet);
-                    wallet.setWalletId(String.format("FW%06d", wallet.getId()));
                     return walletRepository.save(wallet);
                 });
     }

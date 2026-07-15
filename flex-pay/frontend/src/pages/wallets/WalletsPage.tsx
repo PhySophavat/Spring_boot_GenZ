@@ -85,6 +85,7 @@ export default function WalletsPage() {
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.2em] text-slate-500">
               <tr>
                 <th className="px-6 py-4">Wallet ID</th>
+                <th className="px-6 py-4">Wallet Number</th>
                 <th className="px-6 py-4">User ID</th>
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Balance</th>
@@ -115,7 +116,8 @@ export default function WalletsPage() {
               {!loading && !error && wallets.length > 0 &&
                 wallets.map((wallet) => (
                   <tr key={wallet.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 font-medium text-slate-900">#{wallet.id}</td>
+                    <td className="px-6 py-4 font-medium text-slate-900">#{wallet.walletId}</td>
+                    <td className="px-6 py-4 text-slate-700">#{wallet.walletNumber}</td>
                     <td className="px-6 py-4 text-slate-700">#{wallet.userId}</td>
                     <td className="px-6 py-4 text-slate-700">{wallet.fullName}</td>
                     <td className="px-6 py-4 text-slate-700">
