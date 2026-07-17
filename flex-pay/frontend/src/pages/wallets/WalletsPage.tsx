@@ -121,8 +121,8 @@ export default function WalletsPage() {
                     <td className="px-6 py-4 text-slate-700">#{wallet.userId}</td>
                     <td className="px-6 py-4 text-slate-700">{wallet.fullName}</td>
                     <td className="px-6 py-4 text-slate-700">
-                      <div>{formatUsd(wallet.balance)}</div>
-                      <div className="text-xs text-slate-500">{formatKhr(wallet.balance * KHR_EXCHANGE_RATE)}</div>
+                      <div className="font-semibold text-slate-900">{formatUsd(wallet.usdBalance)}</div>
+                      <div className="text-xs text-slate-500">{formatKhr(wallet.khrBalance)}</div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${wallet.hasPin ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>

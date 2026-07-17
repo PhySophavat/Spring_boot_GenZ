@@ -12,8 +12,8 @@ public class WalletResponse {
     private String walletId;
     private String walletNumber;
     private String fullName;
-    private BigDecimal balance;
-    private String currency;
+    private BigDecimal usdBalance;
+    private BigDecimal khrBalance;
     private String status;
     private boolean hasPin;
     private List<TransactionResponse> recentTransactions;
@@ -23,14 +23,14 @@ public class WalletResponse {
     public WalletResponse() {
     }
 
-    public WalletResponse(Long id, Long userId, String walletId, String walletNumber, String fullName, BigDecimal balance, String currency, String status, boolean hasPin, List<TransactionResponse> recentTransactions, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public WalletResponse(Long id, Long userId, String walletId, String walletNumber, String fullName, BigDecimal usdBalance, BigDecimal khrBalance, String status, boolean hasPin, List<TransactionResponse> recentTransactions, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.userId = userId;
         this.walletId = walletId;
         this.walletNumber = walletNumber;
         this.fullName = fullName;
-        this.balance = balance;
-        this.currency = currency;
+        this.usdBalance = usdBalance;
+        this.khrBalance = khrBalance;
         this.status = status;
         this.hasPin = hasPin;
         this.recentTransactions = recentTransactions;
@@ -79,20 +79,20 @@ public class WalletResponse {
         this.fullName = fullName;
     }
 
-    public BigDecimal getBalance() {
-        return balance;
+    public BigDecimal getUsdBalance() {
+        return usdBalance;
     }
 
-    public void setBalance(BigDecimal balance) {
-        this.balance = balance;
+    public void setUsdBalance(BigDecimal usdBalance) {
+        this.usdBalance = usdBalance;
     }
 
-    public String getCurrency() {
-        return currency;
+    public BigDecimal getKhrBalance() {
+        return khrBalance;
     }
 
-    public void setCurrency(String currency) {
-        this.currency = currency;
+    public void setKhrBalance(BigDecimal khrBalance) {
+        this.khrBalance = khrBalance;
     }
 
     public String getStatus() {

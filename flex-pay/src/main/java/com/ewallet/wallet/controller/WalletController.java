@@ -1,5 +1,6 @@
 package com.ewallet.wallet.controller;
 
+import com.ewallet.wallet.dto.DepositRequest;
 import com.ewallet.wallet.dto.WalletPinRequest;
 import com.ewallet.wallet.dto.WalletResponse;
 import com.ewallet.wallet.service.WalletService;
@@ -52,6 +53,15 @@ public class WalletController {
             @Valid @RequestBody WalletPinRequest request) {
         walletService.createPin(userId, request.getPin(), request.getConfirmPin());
         return ResponseEntity.ok(Map.of("message", "PIN set successfully"));
+    }
+
+    @PostMapping("/api/wallets/me/deposit")
+    @Operation(summary = "Deposit / top-up amount into the current user's wallet")
+    public ResponseEntity<WalletResponse> deposit(
+            Authentication authentication,
+            @Valid @RequestBody DepositRequest request) {
+        Long userId = getAuthenticatedUserId(authentication);
+        return ResponseEntity.ok(walletService.deposit(userId, request));
     }
 
     private Long getAuthenticatedUserId(Authentication authentication) {

@@ -1,9 +1,11 @@
 export interface WalletInfo {
-  walletNumber: ReactNode;
-  walletId: ReactNode;
   id: number;
   userId: number;
+  walletId: string;
+  walletNumber: string;
   fullName: string;
-  balance: number;
+  usdBalance: number;
+  khrBalance: number;
+  status: string;
   hasPin: boolean;
 }

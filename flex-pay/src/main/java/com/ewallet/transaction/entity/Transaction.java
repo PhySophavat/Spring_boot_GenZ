@@ -14,8 +14,8 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "reference_number", nullable = false, unique = true, length = 50)
-    private String referenceNumber;
+    @Column(name = "transaction_no", nullable = false, unique = true, length = 50)
+    private String transactionNo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_wallet_id")
@@ -40,6 +40,9 @@ public class Transaction {
     @Column(name = "transaction_type", nullable = false, length = 50)
     private String transactionType;
 
+    @Column(nullable = false, length = 10)
+    private String currency = "USD";
+
     @Column(nullable = false, length = 50)
     private String status;
 
@@ -56,12 +59,12 @@ public class Transaction {
         this.id = id;
     }
 
-    public String getReferenceNumber() {
-        return referenceNumber;
+    public String getTransactionNo() {
+        return transactionNo;
     }
 
-    public void setReferenceNumber(String referenceNumber) {
-        this.referenceNumber = referenceNumber;
+    public void setTransactionNo(String transactionNo) {
+        this.transactionNo = transactionNo;
     }
 
     public Wallet getSenderWallet() {
@@ -118,6 +121,14 @@ public class Transaction {
 
     public void setTransactionType(String transactionType) {
         this.transactionType = transactionType;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 
     public String getStatus() {

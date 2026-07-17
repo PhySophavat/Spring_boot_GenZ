@@ -25,14 +25,17 @@ public class Wallet {
     @Column(name = "wallet_number", nullable = false, unique = true, length = 6)
     private String walletNumber;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal balance = BigDecimal.ZERO;
+    @Column(name = "usd_balance", nullable = false, precision = 19, scale = 2)
+    private BigDecimal usdBalance = BigDecimal.ZERO;
 
-    @Column(nullable = false, length = 10)
-    private String currency = "USD";
+    @Column(name = "khr_balance", nullable = false, precision = 19, scale = 2)
+    private BigDecimal khrBalance = BigDecimal.ZERO;
 
     @Column(nullable = false, length = 20)
     private String status = "ACTIVE";
+
+    @Version
+    private Long version;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -75,20 +78,20 @@ public class Wallet {
         this.walletNumber = walletNumber;
     }
 
-    public BigDecimal getBalance() {
-        return balance;
+    public BigDecimal getUsdBalance() {
+        return usdBalance;
     }
 
-    public void setBalance(BigDecimal balance) {
-        this.balance = balance;
+    public void setUsdBalance(BigDecimal usdBalance) {
+        this.usdBalance = usdBalance;
     }
 
-    public String getCurrency() {
-        return currency;
+    public BigDecimal getKhrBalance() {
+        return khrBalance;
     }
 
-    public void setCurrency(String currency) {
-        this.currency = currency;
+    public void setKhrBalance(BigDecimal khrBalance) {
+        this.khrBalance = khrBalance;
     }
 
     public String getStatus() {
@@ -97,6 +100,14 @@ public class Wallet {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     public LocalDateTime getCreatedAt() {

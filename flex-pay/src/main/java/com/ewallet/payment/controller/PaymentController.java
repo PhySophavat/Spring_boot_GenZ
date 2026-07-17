@@ -1,5 +1,7 @@
 package com.ewallet.payment.controller;
 
+import com.ewallet.payment.dto.PaymentRequest;
+import com.ewallet.payment.dto.PaymentResponse;
 import com.ewallet.payment.dto.SendMoneyRequest;
 import com.ewallet.payment.dto.SendMoneyResponse;
 import com.ewallet.payment.service.PaymentService;
@@ -41,6 +43,13 @@ public class PaymentController {
         }
 
         return paymentService.sendMoney(user.getId(), request);
+    }
+
+    @PostMapping
+    @Operation(summary = "Process payment using secure receiver token and sender PIN verification")
+    public PaymentResponse processPayment(Authentication authentication, @Valid @RequestBody PaymentRequest request) {
+        User user = getAuthenticatedUser(authentication);
+        return paymentService.processPayment(user.getId(), request);
     }
 
     private User getAuthenticatedUser(Authentication authentication) {

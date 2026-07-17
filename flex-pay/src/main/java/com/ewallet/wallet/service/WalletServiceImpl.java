@@ -2,6 +2,7 @@ package com.ewallet.wallet.service;
 
 import com.ewallet.user.entity.User;
 import com.ewallet.user.repository.UserRepository;
+import com.ewallet.wallet.dto.DepositRequest;
 import com.ewallet.wallet.dto.WalletResponse;
 import com.ewallet.wallet.entity.Wallet;
 import com.ewallet.wallet.repository.WalletRepository;
@@ -72,8 +73,8 @@ public class WalletServiceImpl implements WalletService {
                     wallet.setUser(user);
                     wallet.setWalletNumber(walletNumber);
                     wallet.setWalletId("FW" + walletNumber);
-                    wallet.setBalance(BigDecimal.ZERO);
-                    wallet.setCurrency("USD");
+                    wallet.setUsdBalance(new BigDecimal("1000.00"));
+                    wallet.setKhrBalance(new BigDecimal("5000000.00"));
                     wallet.setStatus("ACTIVE");
                     return walletRepository.save(wallet);
                 });
@@ -182,8 +183,8 @@ public class WalletServiceImpl implements WalletService {
                 wallet.getWalletId(),
                 wallet.getWalletNumber(),
                 wallet.getUser().getFullName(),
-                wallet.getBalance(),
-                wallet.getCurrency(),
+                wallet.getUsdBalance(),
+                wallet.getKhrBalance(),
                 wallet.getStatus(),
                 Boolean.TRUE.equals(wallet.getUser().getPinCreated()),
                 recentResponses,
@@ -202,7 +203,7 @@ public class WalletServiceImpl implements WalletService {
 
         return new TransactionResponse(
                 t.getId(),
-                t.getReferenceNumber(),
+                t.getTransactionNo(),
                 senderWalletNum,
                 senderName,
                 receiverWalletNum,
@@ -212,8 +213,39 @@ public class WalletServiceImpl implements WalletService {
                 t.getTotalAmount(),
                 t.getNote(),
                 t.getTransactionType(),
+                t.getCurrency(),
                 t.getStatus(),
                 t.getCreatedAt()
         );
+    }
+    @Override
+    public WalletResponse deposit(Long userId, DepositRequest request) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseGet(() -> createWalletForUser(userId));
+
+        if ("USD".equalsIgnoreCase(request.getCurrency())) {
+            wallet.setUsdBalance(wallet.getUsdBalance().add(request.getAmount()));
+        } else if ("KHR".equalsIgnoreCase(request.getCurrency())) {
+            wallet.setKhrBalance(wallet.getKhrBalance().add(request.getAmount()));
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported currency: " + request.getCurrency());
+        }
+
+        walletRepository.save(wallet);
+
+        // Record transaction
+        Transaction tx = new Transaction();
+        tx.setReceiverWallet(wallet);
+        tx.setAmount(request.getAmount());
+        tx.setFee(java.math.BigDecimal.ZERO);
+        tx.setTotalAmount(request.getAmount());
+        tx.setCurrency(request.getCurrency().toUpperCase());
+        tx.setTransactionType("DEPOSIT");
+        tx.setStatus("SUCCESS");
+        tx.setNote("Top-up deposit");
+        tx.setTransactionNo("DEP" + System.currentTimeMillis());
+        transactionRepository.save(tx);
+
+        return toResponse(wallet);
     }
 }

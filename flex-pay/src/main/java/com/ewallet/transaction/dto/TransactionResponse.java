@@ -15,6 +15,7 @@ public record TransactionResponse(
     BigDecimal totalAmount,
     String note,
     String transactionType,
+    String currency,
     String status,
     LocalDateTime createdAt
 ) {

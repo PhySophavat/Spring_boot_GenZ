@@ -10,6 +10,7 @@ import com.ewallet.user.repository.UserRepository;
 import com.ewallet.user.service.UserService;
 import com.ewallet.wallet.entity.Wallet;
 import com.ewallet.wallet.service.WalletService;
+import com.ewallet.payment.service.QrCodeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,19 +27,22 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final QrCodeService qrCodeService;
 
     public AuthService(
         UserService userService,
         WalletService walletService,
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
-        JwtService jwtService
+        JwtService jwtService,
+        QrCodeService qrCodeService
     ) {
         this.userService = userService;
         this.walletService = walletService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.qrCodeService = qrCodeService;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -57,6 +61,11 @@ public class AuthService {
         );
 
         Wallet wallet = walletService.createWalletForUser(userResponse.id());
+        
+        // Generate secure public token right after registration
+        User user = userRepository.findById(userResponse.id())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        qrCodeService.getOrCreateToken(user);
         
         UserWithWalletResponse userWithWallet = new UserWithWalletResponse(
             userResponse.id(),

@@ -69,8 +69,8 @@ class WalletServiceImplTest {
         assertThat(result).isNotNull();
         assertThat(result.getWalletNumber()).matches("^\\d{6}$");
         assertThat(result.getWalletId()).isEqualTo("FW" + result.getWalletNumber());
-        assertThat(result.getBalance().toPlainString()).isEqualTo("0");
-        assertThat(result.getCurrency()).isEqualTo("USD");
+        assertThat(result.getUsdBalance().toPlainString()).isEqualTo("0");
+        assertThat(result.getKhrBalance().toPlainString()).isEqualTo("0");
         assertThat(result.getStatus()).isEqualTo("ACTIVE");
         assertThat(result.getUser()).isSameAs(user);
     }
@@ -102,8 +102,8 @@ class WalletServiceImplTest {
         existing.setUser(user);
         existing.setWalletNumber("123456");
         existing.setWalletId("FW123456");
-        existing.setBalance(new java.math.BigDecimal("10.00"));
-        existing.setCurrency("USD");
+        existing.setUsdBalance(new java.math.BigDecimal("10.00"));
+        existing.setKhrBalance(java.math.BigDecimal.ZERO);
         existing.setStatus("ACTIVE");
 
         when(userRepository.findById(42L)).thenReturn(Optional.of(user));

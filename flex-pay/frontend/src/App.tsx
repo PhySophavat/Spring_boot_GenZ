@@ -3,13 +3,14 @@ import { Search, Bell, UserCircle2 } from "lucide-react";
 import Sidebar from "./components/shared/Sidebar";
 import UsersPage from "./pages/users/UsersPage";
 import WalletsPage from "./pages/wallets/WalletsPage";
-import PinPage from "./pages/pin/PinPage";
+import DashboardPage from "./pages/dashboard/DashboardPage";
+import PaymentsPage from "./pages/payments/PaymentsPage";
 
 const PAGES = {
   dashboard: "Dashboard",
-  users: "Users",
-  wallet: "Wallets",
-  pin: "PIN",
+  users:     "Users",
+  wallet:    "Wallets",
+  payments:  "Transactions",
 } as const;
 
 type PageKey = keyof typeof PAGES;
@@ -18,57 +19,117 @@ export default function App() {
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
 
   return (
-    <div className="flex h-screen w-full bg-slate-100 text-slate-900">
+    <div style={{ display: "flex", height: "100vh", width: "100%", background: "#f5f7fa", color: "#0f172a" }}>
       <Sidebar activePage={activePage} onChangePage={setActivePage} />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white/90 px-6 py-4 shadow-sm backdrop-blur">
-          <div className="flex items-center gap-3">
-          
+      <div style={{ display: "flex", flex: 1, flexDirection: "column", overflow: "hidden" }}>
+        {/* Top Bar */}
+        <header
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "16px",
+            borderBottom: "1px solid #e8ecf0",
+            background: "#ffffff",
+            padding: "0 28px",
+            height: "64px",
+            flexShrink: 0,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+          }}
+        >
+          {/* Left: Page Title + Search */}
+          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+            <div>
+              <p style={{ fontSize: "11px", color: "#94a3b8", margin: 0, fontWeight: 500 }}>
+                Flex Pay Admin
+              </p>
+              <p style={{ fontSize: "15px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
+                {PAGES[activePage]}
+              </p>
+            </div>
 
-            <div className="relative w-[300px] hidden flex-1 items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex">
-              <Search className="h-4 w-4 text-slate-400" />
+            <div
+              style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                border: "1px solid #e8ecf0",
+                borderRadius: "10px",
+                padding: "8px 14px",
+                background: "#f8fafc",
+                width: "240px",
+              }}
+            >
+              <Search size={14} color="#94a3b8" />
               <input
                 type="search"
-                placeholder="Search "
-                className="ml-3 w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+                placeholder="Search anything..."
+                style={{
+                  border: "none", background: "transparent",
+                  fontSize: "13px", color: "#334155",
+                  outline: "none", width: "100%",
+                }}
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-          
-           
+          {/* Right: Actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100"
               aria-label="Notifications"
+              style={{
+                width: "40px", height: "40px",
+                borderRadius: "10px",
+                border: "1px solid #e8ecf0",
+                background: "#fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer",
+                color: "#64748b",
+              }}
             >
-              <Bell className="h-5 w-5" />
+              <Bell size={16} />
             </button>
+
             <button
               type="button"
-              className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
               aria-label="Admin profile"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: "8px",
+                padding: "8px 14px",
+                borderRadius: "10px",
+                border: "1px solid #e8ecf0",
+                background: "#fff",
+                fontSize: "13px", fontWeight: 600,
+                color: "#334155", cursor: "pointer",
+              }}
             >
-              <UserCircle2 className="h-5 w-5 text-slate-500" />
+              <UserCircle2 size={18} color="#64748b" />
               Admin
             </button>
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto px-6 py-8">
-          {activePage === "dashboard" && (
-            <div className="h-full rounded-[32px] border border-slate-200 bg-slate-50 shadow-sm" />
-          )}
-          {activePage === "users" && <UsersPage />}
-          {activePage === "wallet" && <WalletsPage />}
-          {activePage === "pin" && <PinPage />}
+        {/* Main Content */}
+        <main style={{ flex: 1, overflowY: "auto", padding: "28px 28px" }}>
+          {activePage === "dashboard" && <DashboardPage />}
+          {activePage === "users"     && <UsersPage />}
+          {activePage === "wallet"    && <WalletsPage />}
+          {activePage === "payments"  && <PaymentsPage />}
         </main>
 
-        <footer className="flex items-center justify-between gap-4 border-t border-slate-200 bg-slate-100 px-6 py-3 text-sm text-slate-500">
+        {/* Footer */}
+        <footer
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            borderTop: "1px solid #e8ecf0",
+            background: "#fff",
+            padding: "12px 28px",
+            fontSize: "12px", color: "#94a3b8",
+            flexShrink: 0,
+          }}
+        >
           <span>© 2026 Flex Pay. All rights reserved.</span>
-          <span>Powered by Flex Pay </span>
+          <span>Powered by Flex Pay</span>
         </footer>
       </div>
     </div>
