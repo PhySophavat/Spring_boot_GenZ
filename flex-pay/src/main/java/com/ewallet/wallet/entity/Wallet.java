@@ -28,6 +28,9 @@ public class Wallet {
     @Column(name = "usd_balance", nullable = false, precision = 19, scale = 2)
     private BigDecimal usdBalance = BigDecimal.ZERO;
 
+    @Column(name = "savings_balance", nullable = false, precision = 19, scale = 2)
+    private BigDecimal savingsBalance = new BigDecimal("48778.50");
+
     @Column(name = "khr_balance", nullable = false, precision = 19, scale = 2)
     private BigDecimal khrBalance = BigDecimal.ZERO;
 
@@ -84,6 +87,14 @@ public class Wallet {
 
     public void setUsdBalance(BigDecimal usdBalance) {
         this.usdBalance = usdBalance;
+    }
+
+    public BigDecimal getSavingsBalance() {
+        return savingsBalance;
+    }
+
+    public void setSavingsBalance(BigDecimal savingsBalance) {
+        this.savingsBalance = savingsBalance;
     }
 
     public BigDecimal getKhrBalance() {

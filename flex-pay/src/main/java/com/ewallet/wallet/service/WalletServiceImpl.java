@@ -177,7 +177,7 @@ public class WalletServiceImpl implements WalletService {
                 .map(this::toTransactionResponse)
                 .toList();
 
-        return new WalletResponse(
+        WalletResponse response = new WalletResponse(
                 wallet.getId(),
                 wallet.getUser().getId(),
                 wallet.getWalletId(),
@@ -191,6 +191,8 @@ public class WalletServiceImpl implements WalletService {
                 wallet.getCreatedAt(),
                 wallet.getUpdatedAt()
         );
+        response.setSavingsBalance(wallet.getSavingsBalance());
+        return response;
     }
 
     private TransactionResponse toTransactionResponse(Transaction t) {

@@ -13,6 +13,7 @@ public class WalletResponse {
     private String walletNumber;
     private String fullName;
     private BigDecimal usdBalance;
+    private BigDecimal savingsBalance;
     private BigDecimal khrBalance;
     private String status;
     private boolean hasPin;
@@ -85,6 +86,14 @@ public class WalletResponse {
 
     public void setUsdBalance(BigDecimal usdBalance) {
         this.usdBalance = usdBalance;
+    }
+
+    public BigDecimal getSavingsBalance() {
+        return savingsBalance;
+    }
+
+    public void setSavingsBalance(BigDecimal savingsBalance) {
+        this.savingsBalance = savingsBalance;
     }
 
     public BigDecimal getKhrBalance() {
