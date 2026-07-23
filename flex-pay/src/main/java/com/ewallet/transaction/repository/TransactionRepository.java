@@ -11,6 +11,8 @@ import java.util.List;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
+    List<Transaction> findTop10BySenderWalletUserIdOrReceiverWalletUserIdOrderByCreatedAtDesc(Long senderUserId, Long receiverUserId);
+
     @Query("SELECT t FROM Transaction t WHERE t.senderWallet.id = :walletId OR t.receiverWallet.id = :walletId ORDER BY t.createdAt DESC")
     List<Transaction> findRecentTransactionsByWalletId(@Param("walletId") Long walletId);
 

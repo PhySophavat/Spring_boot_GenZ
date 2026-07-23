@@ -12,6 +12,7 @@ public class WalletResponse {
     private String walletId;
     private String walletNumber;
     private String fullName;
+    private String phoneNumber;
     private BigDecimal usdBalance;
     private BigDecimal savingsBalance;
     private BigDecimal khrBalance;
@@ -78,6 +79,14 @@ public class WalletResponse {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public BigDecimal getUsdBalance() {
