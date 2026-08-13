@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
-import { Search, Bell, UserCircle2, LogOut } from "lucide-react";
+import { Bell, UserCircle2, LogOut } from "lucide-react";
 import Sidebar from "./components/shared/Sidebar";
 import UsersPage from "./pages/users/UsersPage";
 import WalletsPage from "./pages/wallets/WalletsPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
+import ContactsPage from "./pages/contacts/ContactsPage";
+import CardsPage from "./pages/cards/CardsPage";
 import PaymentsPage from "./pages/payments/PaymentsPage";
 import AuthPage from "./pages/auth/AuthPage";
+import GlobalSearch from "./components/shared/GlobalSearch";
 import { getSession, saveSession, clearSession, type UserSession } from "./services/authService";
 
 const PAGES = {
   dashboard: "Dashboard",
   users:     "Users",
+  contacts:  "Contacts",
+  cards:     "Cards",
   wallet:    "Wallets",
   payments:  "Transactions",
 } as const;
@@ -75,31 +80,11 @@ export default function App() {
                 Flex Pay Admin
               </p>
               <p style={{ fontSize: "15px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
-                {PAGES[activePage]}
+                {PAGES[activePage as keyof typeof PAGES]}
               </p>
             </div>
 
-            <div
-              style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                border: "1px solid #e8ecf0",
-                borderRadius: "10px",
-                padding: "8px 14px",
-                background: "#f8fafc",
-                width: "240px",
-              }}
-            >
-              <Search size={14} color="#94a3b8" />
-              <input
-                type="search"
-                placeholder="Search anything..."
-                style={{
-                  border: "none", background: "transparent",
-                  fontSize: "13px", color: "#334155",
-                  outline: "none", width: "100%",
-                }}
-              />
-            </div>
+            <GlobalSearch />
           </div>
 
           {/* Right: Actions */}
@@ -163,6 +148,8 @@ export default function App() {
         <main style={{ flex: 1, overflowY: "auto", padding: "28px 28px" }}>
           {activePage === "dashboard" && <DashboardPage />}
           {activePage === "users"     && <UsersPage />}
+          {activePage === "contacts"  && <ContactsPage />}
+          {activePage === "cards"     && <CardsPage />}
           {activePage === "wallet"    && <WalletsPage />}
           {activePage === "payments"  && <PaymentsPage />}
         </main>
