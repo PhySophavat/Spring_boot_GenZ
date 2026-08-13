@@ -34,6 +34,9 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/wallets").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/wallets/*/set-pin").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users").permitAll()
+                .requestMatchers("/api/wallets/me/deposit").permitAll()  // ← ADD THIS LINE
+
+                .requestMatchers("/api/transactions/transfer").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/admin/dashboard/**").permitAll()
                 .anyRequest().authenticated()

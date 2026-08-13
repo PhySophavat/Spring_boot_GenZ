@@ -8,6 +8,7 @@ export interface DashboardSummary {
 }
 
 export interface TransactionInfo {
+  sender?: any;
   id: number;
   referenceNumber: string;
   senderWalletNumber: string;

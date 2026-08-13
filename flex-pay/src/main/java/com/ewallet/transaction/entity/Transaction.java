@@ -1,6 +1,8 @@
 package com.ewallet.transaction.entity;
 
 import com.ewallet.wallet.entity.Wallet;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,13 +19,15 @@ public class Transaction {
     @Column(name = "transaction_no", nullable = false, unique = true, length = 50)
     private String transactionNo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_wallet_id")
-    private Wallet senderWallet;
+   @ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "sender_wallet_id")
+@JsonIgnore  // ADD THIS
+private Wallet senderWallet;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receiver_wallet_id")
-    private Wallet receiverWallet;
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "receiver_wallet_id")
+@JsonIgnore  // ADD THIS
+private Wallet receiverWallet;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
