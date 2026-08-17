@@ -1,9 +1,11 @@
-import { LayoutDashboard, Users, Wallet, ArrowRightLeft } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, ArrowRightLeft, BookUser, CreditCard } from "lucide-react";
 import logoWithoutBg from "../../../logowithoutbg.png";
 
 const NAV_ITEMS = [
   { label: "Dashboard",    icon: LayoutDashboard,  key: "dashboard"  },
   { label: "Users",        icon: Users,             key: "users"      },
+  { label: "Contacts",     icon: BookUser,          key: "contacts"   },
+  { label: "Cards",        icon: CreditCard,        key: "cards"      },
   { label: "Wallets",      icon: Wallet,            key: "wallet"     },
   { label: "Transactions", icon: ArrowRightLeft,    key: "payments"   },
 ] as const;

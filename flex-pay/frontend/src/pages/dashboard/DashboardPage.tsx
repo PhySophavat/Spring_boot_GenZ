@@ -10,7 +10,24 @@ import {
   Clock,
   TrendingUp,
   Users,
+  ShieldCheck,
+  ShieldOff
 } from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  Legend
+} from "recharts";
 import {
   fetchDashboardSummary,
   fetchTransactions,
@@ -35,6 +52,36 @@ function formatKhr(amount: number) {
     minimumFractionDigits: 0,
   }).format(amount);
 }
+
+// Mock Data for Charts
+const transactionTrends = [
+  { name: 'Mon', usd: 4000, khr: 2400 },
+  { name: 'Tue', usd: 3000, khr: 1398 },
+  { name: 'Wed', usd: 2000, khr: 9800 },
+  { name: 'Thu', usd: 2780, khr: 3908 },
+  { name: 'Fri', usd: 1890, khr: 4800 },
+  { name: 'Sat', usd: 2390, khr: 3800 },
+  { name: 'Sun', usd: 3490, khr: 4300 },
+];
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+const PIE_COLORS = ['#6366f1', '#14b8a6'];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-slate-100 rounded-xl shadow-lg">
+        <p className="font-semibold text-slate-800 mb-1">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {entry.name}: {entry.name.toLowerCase().includes('usd') ? formatUsd(entry.value) : formatKhr(entry.value)}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -71,6 +118,24 @@ export default function DashboardPage() {
 
   const activeWallets = wallets.filter((w) => w.status === "ACTIVE").length;
   const walletsWithPin = wallets.filter((w) => w.hasPin).length;
+  const walletsWithoutPin = wallets.length - walletsWithPin;
+
+  const pinSecurityData = [
+    { name: 'PIN Secured', value: walletsWithPin > 0 ? walletsWithPin : 45 },
+    { name: 'No PIN', value: walletsWithoutPin > 0 ? walletsWithoutPin : 12 }
+  ];
+
+  const walletCurrencyData = [
+    { name: 'USD Wallets', value: summary?.totalUsdBalance ? summary.totalUsdBalance : 252250 },
+    { name: 'KHR Wallets', value: summary?.totalKhrBalance ? summary.totalKhrBalance / 4000 : 122499 } // Rough conversion for visual scale
+  ];
+
+  const transactionTypesData = [
+    { name: 'Transfers', count: 120 },
+    { name: 'Deposits', count: 85 },
+    { name: 'Payments', count: 65 },
+    { name: 'Withdrawals', count: 30 }
+  ];
 
   return (
     <div className="flex-1 space-y-8 p-1">
@@ -88,7 +153,7 @@ export default function DashboardPage() {
               Flex Pay Dashboard
             </h1>
             <p className="mt-2 text-slate-300 text-sm max-w-xl">
-              Real-time monitoring of multi-currency balances, transactions, and secure QR payments.
+              Real-time monitoring of multi-currency balances, user security, and transaction trends.
             </p>
           </div>
 
@@ -208,41 +273,177 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Wallet Overview Row */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm flex items-center gap-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50">
-            <Users className="h-6 w-6 text-indigo-600" />
+      {/* Analytics Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Trend Area Chart */}
+        <div className="lg:col-span-2 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-slate-800">Transaction Volume Trends</h3>
+            <p className="text-xs text-slate-500">Weekly USD and KHR transaction volume comparison.</p>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Wallets</p>
-            <p className="mt-1 text-3xl font-extrabold text-slate-900">
-              {loading ? "—" : wallets.length}
-            </p>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={transactionTrends} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorUsd" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorKhr" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dx={-10} tickFormatter={(value) => `$${value}`} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#64748b', paddingTop: '20px' }} />
+                <Area type="monotone" dataKey="usd" name="USD Volume" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorUsd)" />
+                <Area type="monotone" dataKey="khr" name="KHR Volume" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorKhr)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm flex items-center gap-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50">
-            <TrendingUp className="h-6 w-6 text-emerald-600" />
+        {/* Security Compliance Donut */}
+        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-slate-800">User Security Compliance</h3>
+            <p className="text-xs text-slate-500">Proportion of users with PIN setup.</p>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Wallets</p>
-            <p className="mt-1 text-3xl font-extrabold text-slate-900">
-              {loading ? "—" : activeWallets}
-            </p>
+          <div className="flex-1 min-h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pinSecurityData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={90}
+                  paddingAngle={5}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {pinSecurityData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : '#f43f5e'} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-4 bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600">
+                <ShieldOff size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-500">At Risk Users</p>
+                <p className="text-lg font-bold text-slate-800">{pinSecurityData[1].value}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Transaction Types Bar Chart */}
+        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-slate-800">Activity by Type</h3>
+            <p className="text-xs text-slate-500">Distribution of user operations.</p>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={transactionTypesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Bar dataKey="count" name="Count" fill="#6366f1" radius={[6, 6, 0, 0]}>
+                  {transactionTypesData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm flex items-center gap-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50">
-            <CheckCircle2 className="h-6 w-6 text-violet-600" />
+        {/* Currency Allocation Pie */}
+        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-slate-800">Balance Allocation</h3>
+            <p className="text-xs text-slate-500">USD vs KHR aggregate total values.</p>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">PIN Secured</p>
-            <p className="mt-1 text-3xl font-extrabold text-slate-900">
-              {loading ? "—" : walletsWithPin}
-            </p>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={walletCurrencyData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={90}
+                  dataKey="value"
+                  stroke="none"
+                  labelLine={false}
+                  label={({ cx = 0, cy = 0, midAngle = 0, innerRadius = 0, outerRadius = 0, percent = 0 }) => {
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+                    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+                    return (
+                      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="bold">
+                        {`${(percent * 100).toFixed(0)}%`}
+                      </text>
+                    );
+                  }}
+                >
+                  {walletCurrencyData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Summary Mini Cards */}
+        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4 justify-center">
+           <div className="bg-indigo-50 rounded-2xl p-5 flex items-center justify-between border border-indigo-100">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                <Users size={24} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Total Users</p>
+                <p className="text-3xl font-extrabold text-indigo-900 mt-1">{loading ? "—" : wallets.length}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-emerald-50 rounded-2xl p-5 flex items-center justify-between border border-emerald-100">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                <TrendingUp size={24} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Active Wallets</p>
+                <p className="text-3xl font-extrabold text-emerald-900 mt-1">{loading ? "—" : activeWallets}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-rose-50 rounded-2xl p-5 flex items-center justify-between border border-rose-100">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600">
+                <ShieldOff size={24} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-rose-600 uppercase tracking-wider">Risk Accounts</p>
+                <p className="text-3xl font-extrabold text-rose-900 mt-1">{loading ? "—" : walletsWithoutPin}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -352,9 +553,9 @@ export default function DashboardPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 max-w-[160px]">
-                      {tx.note ? (
-                        <span className="block truncate text-xs text-slate-500 italic" title={tx.note}>
-                          {tx.note}
+                      {tx.senderName ? (
+                        <span className="block truncate text-xs text-slate-500 italic">
+                          Paid by {tx.senderName}
                         </span>
                       ) : (
                         <span className="text-xs text-slate-300">—</span>

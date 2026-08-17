@@ -48,92 +48,39 @@ public class Wallet {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    // --- Getters and Setters ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
-    public User getUser() {
-        return user;
-    }
+    public String getWalletId() { return walletId; }
+    public void setWalletId(String walletId) { this.walletId = walletId; }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+    public String getWalletNumber() { return walletNumber; }
+    public void setWalletNumber(String walletNumber) { this.walletNumber = walletNumber; }
 
-    public String getWalletId() {
-        return walletId;
-    }
+    public BigDecimal getUsdBalance() { return usdBalance; }
+    public void setUsdBalance(BigDecimal usdBalance) { this.usdBalance = usdBalance; }
 
-    public void setWalletId(String walletId) {
-        this.walletId = walletId;
-    }
+    public BigDecimal getSavingsBalance() { return savingsBalance; }
+    public void setSavingsBalance(BigDecimal savingsBalance) { this.savingsBalance = savingsBalance; }
 
-    public String getWalletNumber() {
-        return walletNumber;
-    }
+    public BigDecimal getKhrBalance() { return khrBalance; }
+    public void setKhrBalance(BigDecimal khrBalance) { this.khrBalance = khrBalance; }
 
-    public void setWalletNumber(String walletNumber) {
-        this.walletNumber = walletNumber;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public BigDecimal getUsdBalance() {
-        return usdBalance;
-    }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 
-    public void setUsdBalance(BigDecimal usdBalance) {
-        this.usdBalance = usdBalance;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public BigDecimal getSavingsBalance() {
-        return savingsBalance;
-    }
-
-    public void setSavingsBalance(BigDecimal savingsBalance) {
-        this.savingsBalance = savingsBalance;
-    }
-
-    public BigDecimal getKhrBalance() {
-        return khrBalance;
-    }
-
-    public void setKhrBalance(BigDecimal khrBalance) {
-        this.khrBalance = khrBalance;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public void setVersion(Long version) {
-        this.version = version;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    // NO MORE BROKEN getAccountHolderName() METHOD!
 }

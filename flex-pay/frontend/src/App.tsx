@@ -1,14 +1,21 @@
-import { useState } from "react";
-import { Search, Bell, UserCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Bell, UserCircle2, LogOut } from "lucide-react";
 import Sidebar from "./components/shared/Sidebar";
 import UsersPage from "./pages/users/UsersPage";
 import WalletsPage from "./pages/wallets/WalletsPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
+import ContactsPage from "./pages/contacts/ContactsPage";
+import CardsPage from "./pages/cards/CardsPage";
 import PaymentsPage from "./pages/payments/PaymentsPage";
+import AuthPage from "./pages/auth/AuthPage";
+import GlobalSearch from "./components/shared/GlobalSearch";
+import { getSession, saveSession, clearSession, type UserSession } from "./services/authService";
 
 const PAGES = {
   dashboard: "Dashboard",
   users:     "Users",
+  contacts:  "Contacts",
+  cards:     "Cards",
   wallet:    "Wallets",
   payments:  "Transactions",
 } as const;
@@ -17,6 +24,34 @@ type PageKey = keyof typeof PAGES;
 
 export default function App() {
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
+  const [session, setSession] = useState<UserSession | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const activeSession = getSession();
+    if (activeSession) {
+      setSession(activeSession);
+    }
+    setIsInitializing(false);
+  }, []);
+
+  function handleLogin(newSession: UserSession) {
+    saveSession(newSession);
+    setSession(newSession);
+  }
+
+  function handleLogout() {
+    clearSession();
+    setSession(null);
+  }
+
+  if (isInitializing) {
+    return <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>Loading...</div>;
+  }
+
+  if (!session) {
+    return <AuthPage onAuthSuccess={handleLogin} />;
+  }
 
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%", background: "#f5f7fa", color: "#0f172a" }}>
@@ -45,31 +80,11 @@ export default function App() {
                 Flex Pay Admin
               </p>
               <p style={{ fontSize: "15px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
-                {PAGES[activePage]}
+                {PAGES[activePage as keyof typeof PAGES]}
               </p>
             </div>
 
-            <div
-              style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                border: "1px solid #e8ecf0",
-                borderRadius: "10px",
-                padding: "8px 14px",
-                background: "#f8fafc",
-                width: "240px",
-              }}
-            >
-              <Search size={14} color="#94a3b8" />
-              <input
-                type="search"
-                placeholder="Search anything..."
-                style={{
-                  border: "none", background: "transparent",
-                  fontSize: "13px", color: "#334155",
-                  outline: "none", width: "100%",
-                }}
-              />
-            </div>
+            <GlobalSearch />
           </div>
 
           {/* Right: Actions */}
@@ -100,11 +115,31 @@ export default function App() {
                 border: "1px solid #e8ecf0",
                 background: "#fff",
                 fontSize: "13px", fontWeight: 600,
-                color: "#334155", cursor: "pointer",
+                color: "#334155", cursor: "default",
               }}
             >
               <UserCircle2 size={18} color="#64748b" />
-              Admin
+              {session.user.name} ({session.user.role})
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Logout"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: "8px",
+                padding: "8px 14px",
+                borderRadius: "10px",
+                border: "none",
+                background: "#fee2e2",
+                fontSize: "13px", fontWeight: 600,
+                color: "#dc2626", cursor: "pointer",
+                transition: "background 0.2s"
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#fecaca"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#fee2e2"; }}
+            >
+              <LogOut size={16} />
+              Logout
             </button>
           </div>
         </header>
@@ -113,6 +148,8 @@ export default function App() {
         <main style={{ flex: 1, overflowY: "auto", padding: "28px 28px" }}>
           {activePage === "dashboard" && <DashboardPage />}
           {activePage === "users"     && <UsersPage />}
+          {activePage === "contacts"  && <ContactsPage />}
+          {activePage === "cards"     && <CardsPage />}
           {activePage === "wallet"    && <WalletsPage />}
           {activePage === "payments"  && <PaymentsPage />}
         </main>

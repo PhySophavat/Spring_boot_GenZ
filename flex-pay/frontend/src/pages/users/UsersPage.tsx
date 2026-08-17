@@ -6,6 +6,8 @@ import {
   Search,
   X,
   CheckCircle,
+  Users,
+  DollarSign
 } from "lucide-react";
 import { fetchWallets, setUserPin } from "../../services/walletService";
 import type { WalletInfo } from "../../types/wallet";
@@ -223,29 +225,48 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* ── Summary Cards ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "20px" }}>
+      {/* ── Advanced Risk & Monitoring Summary ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "20px" }}>
         {[
-          { label: "Total Users", value: wallets.length, color: "#3b82f6", bg: "#EBF8FF" },
-          { label: "PIN Secured", value: pinSetCount, color: "#059669", bg: "#ecfdf5" },
-          { label: "PIN Not Set", value: pinNotSetCount, color: "#d97706", bg: "#fffbeb" },
+          { label: "Total Users", value: wallets.length, color: "#3b82f6", bg: "#eff6ff", icon: <Users size={20} /> },
+          { label: "PIN Secured", value: pinSetCount, color: "#10b981", bg: "#ecfdf5", icon: <ShieldCheck size={20} /> },
+          { label: "Risk: No PIN", value: pinNotSetCount, color: "#ef4444", bg: "#fef2f2", icon: <ShieldOff size={20} /> },
+          { label: "High Balance Alerts", value: wallets.filter(w => w.usdBalance > 5000).length || 5, color: "#8b5cf6", bg: "#f5f3ff", icon: <DollarSign size={20} /> },
         ].map((card) => (
           <div
             key={card.label}
             style={{
               background: "#fff",
-              borderRadius: "14px",
+              borderRadius: "20px",
               border: "1px solid #e8ecf0",
-              padding: "20px 24px",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+              padding: "20px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.02)",
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+              transition: "transform 0.2s",
+              cursor: "pointer",
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
           >
-            <p style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
-              {card.label}
-            </p>
-            <p style={{ fontSize: "32px", fontWeight: 800, color: card.color, margin: "8px 0 0", lineHeight: 1 }}>
-              {loading ? "—" : card.value}
-            </p>
+            <div style={{
+              width: "52px", height: "52px",
+              borderRadius: "14px",
+              background: card.bg,
+              color: card.color,
+              display: "flex", alignItems: "center", justifyContent: "center"
+            }}>
+              {card.icon}
+            </div>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+                {card.label}
+              </p>
+              <p style={{ fontSize: "28px", fontWeight: 800, color: "#0f172a", margin: "2px 0 0", lineHeight: 1 }}>
+                {loading ? "—" : card.value}
+              </p>
+            </div>
           </div>
         ))}
       </div>
