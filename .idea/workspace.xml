@@ -1,21 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="02ececcf-4216-482e-9fc2-b6be9fccca5b" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
   <component name="CopilotPersistence">
     <persistenceIdMap>
       <entry key="_C:/Users/neth/Spring_boot_GenZ" value="3HfQiMZGo7btYxfW5M5B0WVuxCL" />
     </persistenceIdMap>
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 1
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
   <component name="ProjectId" id="3HfQiMZGo7btYxfW5M5B0WVuxCL" />
+  <component name="ProjectViewState">
+    <option name="showLibraryContents" value="true" />
+  </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
     "copilot.chat.legacySessionMetadata.migrated": "true"
   }
 }]]></component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
+      <changelist id="02ececcf-4216-482e-9fc2-b6be9fccca5b" name="Changes" comment="" />
       <created>1786256771831</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />

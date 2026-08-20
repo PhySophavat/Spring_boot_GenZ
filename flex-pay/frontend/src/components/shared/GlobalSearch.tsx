@@ -37,7 +37,7 @@ export default function GlobalSearch() {
         const filtered = allUsers.filter(
           (u) =>
             u.fullName.toLowerCase().includes(lowerQuery) ||
-            u.email.toLowerCase().includes(lowerQuery) ||
+            (u.email?.toLowerCase().includes(lowerQuery)) ||
             (u.phoneNumber && u.phoneNumber.includes(lowerQuery))
         );
         setUsers(filtered);

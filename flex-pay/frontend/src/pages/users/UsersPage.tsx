@@ -7,9 +7,13 @@ import {
   X,
   CheckCircle,
   Users,
-  DollarSign
+  DollarSign,
+  Plus,
+  Trash2,
+  Edit2
 } from "lucide-react";
 import { fetchWallets, setUserPin } from "../../services/walletService";
+import { createUser, updateUser, deleteUser } from "../../services/userService";
 import type { WalletInfo } from "../../types/wallet";
 
 interface PinModalState {
@@ -32,6 +36,41 @@ export default function UsersPage() {
   const [successMsg, setSuccessMsg] = useState("");
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
   const confirmRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // User Modal
+  const [userModal, setUserModal] = useState({
+    open: false,
+    mode: "ADD" as "ADD" | "EDIT",
+    userId: undefined as number | undefined,
+    formData: { fullName: "", phoneNumber: "", email: "", password: "" },
+    loading: false
+  });
+
+  async function handleSaveUser() {
+    setUserModal((m) => ({ ...m, loading: true }));
+    try {
+      if (userModal.mode === "ADD") {
+        await createUser({ ...userModal.formData, password: userModal.formData.password || "123456" });
+      } else if (userModal.userId) {
+        await updateUser(userModal.userId, { ...userModal.formData, password: userModal.formData.password || "123456" });
+      }
+      setUserModal((m) => ({ ...m, open: false, loading: false }));
+      void loadWallets();
+    } catch (err: any) {
+      alert("Failed to save user: " + err.message);
+      setUserModal((m) => ({ ...m, loading: false }));
+    }
+  }
+
+  async function handleDeleteUser(userId: number) {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    try {
+      await deleteUser(userId);
+      void loadWallets();
+    } catch (err: any) {
+      alert("Failed to delete user: " + err.message);
+    }
+  }
 
   useEffect(() => {
     void loadWallets();
@@ -201,27 +240,47 @@ export default function UsersPage() {
               View wallet users and manage their PIN security settings.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => void loadWallets()}
-            disabled={loading}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: "8px",
-              padding: "10px 18px",
-              borderRadius: "10px",
-              border: "1px solid #e2e8f0",
-              background: "#fff",
-              fontSize: "13px", fontWeight: 600,
-              color: "#475569", cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.7 : 1,
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
-          >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            Refresh
-          </button>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              type="button"
+              onClick={() => setUserModal({ open: true, mode: "ADD", userId: undefined, formData: { fullName: "", phoneNumber: "", email: "", password: "" }, loading: false })}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: "8px",
+                padding: "10px 18px",
+                borderRadius: "10px",
+                border: "none",
+                background: "#0f172a",
+                fontSize: "13px", fontWeight: 600,
+                color: "#fff", cursor: "pointer",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#1e293b"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#0f172a"; }}
+            >
+              <Plus size={14} /> Add User
+            </button>
+            <button
+              type="button"
+              onClick={() => void loadWallets()}
+              disabled={loading}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: "8px",
+                padding: "10px 18px",
+                borderRadius: "10px",
+                border: "1px solid #e2e8f0",
+                background: "#fff",
+                fontSize: "13px", fontWeight: 600,
+                color: "#475569", cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.7 : 1,
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              Refresh
+            </button>
+          </div>
         </div>
       </div>
 
@@ -469,30 +528,50 @@ export default function UsersPage() {
 
                   {/* Actions */}
                   <td style={{ padding: "16px 20px" }}>
-                    <button
-                      type="button"
-                      onClick={() => openModal(wallet)}
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: "6px",
-                        padding: "7px 14px",
-                        borderRadius: "8px",
-                        border: wallet.hasPin ? "1px solid #fde68a" : "1px solid #bfdbfe",
-                        background: wallet.hasPin ? "#fffbeb" : "#EBF8FF",
-                        color: wallet.hasPin ? "#b45309" : "#1a5fa8",
-                        fontSize: "12px", fontWeight: 600,
-                        cursor: "pointer",
-                        transition: "background 0.15s, border-color 0.15s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = wallet.hasPin ? "#fef3c7" : "#dbeafe";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = wallet.hasPin ? "#fffbeb" : "#EBF8FF";
-                      }}
-                    >
-                      <ShieldCheck size={13} />
-                      {wallet.hasPin ? "Reset PIN" : "Set PIN"}
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <button
+                        type="button"
+                        onClick={() => openModal(wallet)}
+                        style={{
+                          display: "inline-flex", alignItems: "center", gap: "6px",
+                          padding: "7px 14px",
+                          borderRadius: "8px",
+                          border: wallet.hasPin ? "1px solid #fde68a" : "1px solid #bfdbfe",
+                          background: wallet.hasPin ? "#fffbeb" : "#EBF8FF",
+                          color: wallet.hasPin ? "#b45309" : "#1a5fa8",
+                          fontSize: "12px", fontWeight: 600,
+                          cursor: "pointer",
+                          transition: "background 0.15s, border-color 0.15s",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = wallet.hasPin ? "#fef3c7" : "#dbeafe";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = wallet.hasPin ? "#fffbeb" : "#EBF8FF";
+                        }}
+                      >
+                        <ShieldCheck size={13} />
+                        {wallet.hasPin ? "Reset PIN" : "Set PIN"}
+                      </button>
+                      <button
+                        title="Edit User"
+                        onClick={() => setUserModal({ open: true, mode: "EDIT", userId: wallet.userId, formData: { fullName: wallet.fullName, phoneNumber: "012345678", email: "", password: "" }, loading: false })}
+                        style={{ background: "transparent", border: "none", cursor: "pointer", color: "#94a3b8", display: "flex", alignItems: "center" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#3b82f6"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#94a3b8"; }}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        title="Delete User"
+                        onClick={() => handleDeleteUser(wallet.userId)}
+                        style={{ background: "transparent", border: "none", cursor: "pointer", color: "#94a3b8", display: "flex", alignItems: "center" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#94a3b8"; }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -646,6 +725,126 @@ export default function UsersPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── User Add/Edit Modal ── */}
+      {userModal.open && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(15, 23, 42, 0.5)",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setUserModal({ ...userModal, open: false }); }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "20px",
+              padding: "32px 28px",
+              width: "100%", maxWidth: "420px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+              position: "relative",
+              animation: "modalIn 0.2s ease-out",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setUserModal({ ...userModal, open: false })}
+              style={{
+                position: "absolute", top: "16px", right: "16px",
+                background: "#f1f5f9", border: "none",
+                borderRadius: "8px", padding: "6px",
+                cursor: "pointer", color: "#64748b",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <X size={16} />
+            </button>
+
+            <h3 style={{ fontSize: "18px", fontWeight: 700, margin: "0 0 20px 0", color: "#0f172a" }}>
+              {userModal.mode === "ADD" ? "Add New User" : "Edit User"}
+            </h3>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "6px" }}>Full Name</label>
+                <input
+                  type="text"
+                  value={userModal.formData.fullName}
+                  onChange={(e) => setUserModal({ ...userModal, formData: { ...userModal.formData, fullName: e.target.value } })}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", outline: "none" }}
+                  placeholder="John Doe"
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "6px" }}>Phone Number</label>
+                <input
+                  type="text"
+                  value={userModal.formData.phoneNumber}
+                  onChange={(e) => setUserModal({ ...userModal, formData: { ...userModal.formData, phoneNumber: e.target.value } })}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", outline: "none" }}
+                  placeholder="012345678"
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "6px" }}>Email</label>
+                <input
+                  type="email"
+                  value={userModal.formData.email}
+                  onChange={(e) => setUserModal({ ...userModal, formData: { ...userModal.formData, email: e.target.value } })}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", outline: "none" }}
+                  placeholder="user@example.com"
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "6px" }}>Password</label>
+                <input
+                  type="password"
+                  value={userModal.formData.password}
+                  onChange={(e) => setUserModal({ ...userModal, formData: { ...userModal.formData, password: e.target.value } })}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", outline: "none" }}
+                  placeholder="Leave blank to use default (123456)"
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setUserModal({ ...userModal, open: false })}
+                style={{
+                  flex: 1, padding: "12px",
+                  borderRadius: "12px",
+                  border: "1px solid #e2e8f0",
+                  background: "#fff",
+                  fontWeight: 600, fontSize: "14px",
+                  cursor: "pointer", color: "#475569",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveUser}
+                disabled={userModal.loading}
+                style={{
+                  flex: 1, padding: "12px",
+                  borderRadius: "12px",
+                  border: "none",
+                  background: userModal.loading ? "#93c5fd" : "#10b981",
+                  color: "#fff",
+                  fontWeight: 700, fontSize: "14px",
+                  cursor: userModal.loading ? "not-allowed" : "pointer",
+                  transition: "background 0.15s",
+                }}
+              >
+                {userModal.loading ? "Saving..." : "Save User"}
+              </button>
+            </div>
           </div>
         </div>
       )}
