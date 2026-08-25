@@ -192,6 +192,9 @@ public class WalletServiceImpl implements WalletService {
                 wallet.getUpdatedAt()
         );
         response.setSavingsBalance(wallet.getSavingsBalance());
+        response.setSavingsKhrBalance(wallet.getSavingsKhrBalance());
+        response.setGoalUsdBalance(wallet.getGoalUsdBalance());
+        response.setGoalKhrBalance(wallet.getGoalKhrBalance());
         response.setPhoneNumber(wallet.getUser() != null ? wallet.getUser().getPhoneNumber() : "");
         return response;
     }

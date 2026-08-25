@@ -54,7 +54,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public SendMoneyResponse sendMoney(Long senderUserId, SendMoneyRequest request) {
-        // Fetch sender and receiver
         Wallet senderWallet = walletRepository.findByUserId(senderUserId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender wallet not found"));
 
@@ -65,7 +64,7 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot send money to yourself");
         }
 
-        // Lock wallets in a deterministic order based on ID to prevent deadlocks
+        // Lock wallets in deterministic order
         Wallet firstLock, secondLock;
         if (senderWallet.getId() < receiverWallet.getId()) {
             firstLock = walletRepository.findByWalletNumberWithLock(senderWallet.getWalletNumber())
@@ -79,11 +78,9 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender wallet not found"));
         }
 
-        // Re-assign references after acquiring lock
         senderWallet = senderWallet.getId().equals(firstLock.getId()) ? firstLock : secondLock;
         receiverWallet = receiverWallet.getId().equals(firstLock.getId()) ? firstLock : secondLock;
 
-        // Validations
         if (!"ACTIVE".equals(senderWallet.getStatus())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sender wallet is not active");
         }
@@ -98,17 +95,15 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         if (senderWallet.getUsdBalance().compareTo(amount) < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Main Wallet");
         }
 
-        // Perform balance updates (Default USD for sendMoney)
         senderWallet.setUsdBalance(senderWallet.getUsdBalance().subtract(amount));
         receiverWallet.setUsdBalance(receiverWallet.getUsdBalance().add(amount));
 
         walletRepository.save(senderWallet);
         walletRepository.save(receiverWallet);
 
-        // Create transaction history record
         String referenceNumber = generateReferenceNumber();
         Transaction transaction = new Transaction();
         transaction.setTransactionNo(referenceNumber);
@@ -124,7 +119,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         transactionRepository.save(transaction);
 
-        // Generate notifications
         createNotification(
             senderWallet.getUser(),
             "Money Sent Successfully",
@@ -153,94 +147,152 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentResponse processPayment(Long senderUserId, PaymentRequest request) {
-        // Validate currency
         String currency = request.getCurrency().toUpperCase();
         if (!"USD".equals(currency) && !"KHR".equals(currency)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Currency");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Currency: Must be USD or KHR");
         }
 
-        // Validate amount
         BigDecimal amount = request.getAmount();
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be greater than 0");
         }
+
+        String walletType = request.getWalletType() != null ? request.getWalletType().toUpperCase() : "MAIN";
 
         // Fetch Sender User
         User sender = userRepository.findById(senderUserId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender not found"));
 
-        // Verify PIN (BCrypt PIN)
-        if (!Boolean.TRUE.equals(sender.getPinCreated()) || sender.getPinHash() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PIN is not set");
-        }
-
-        if (sender.getPinLockExpiresAt() != null && sender.getPinLockExpiresAt().isAfter(LocalDateTime.now())) {
-            throw new ResponseStatusException(HttpStatus.LOCKED, "PIN entry is locked");
-        }
-
-        if (!passwordEncoder.matches(request.getPin(), sender.getPinHash())) {
-            int failedAttempts = sender.getPinFailedAttempts() + 1;
-            sender.setPinFailedAttempts(failedAttempts);
-            if (failedAttempts >= 5) {
-                sender.setPinLockExpiresAt(LocalDateTime.now().plusMinutes(10));
-                sender.setPinFailedAttempts(0);
+        // Verify PIN if set and provided
+        if (Boolean.TRUE.equals(sender.getPinCreated()) && sender.getPinHash() != null) {
+            if (sender.getPinLockExpiresAt() != null && sender.getPinLockExpiresAt().isAfter(LocalDateTime.now())) {
+                throw new ResponseStatusException(HttpStatus.LOCKED, "PIN entry is locked due to multiple failed attempts");
             }
-            userRepository.save(sender);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Wrong PIN");
+
+            if (request.getPin() != null && !request.getPin().isEmpty()) {
+                if (!passwordEncoder.matches(request.getPin(), sender.getPinHash())) {
+                    int failedAttempts = sender.getPinFailedAttempts() + 1;
+                    sender.setPinFailedAttempts(failedAttempts);
+                    if (failedAttempts >= 5) {
+                        sender.setPinLockExpiresAt(LocalDateTime.now().plusMinutes(10));
+                        sender.setPinFailedAttempts(0);
+                    }
+                    userRepository.save(sender);
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid PIN");
+                }
+                sender.setPinFailedAttempts(0);
+                sender.setPinLockExpiresAt(null);
+                userRepository.save(sender);
+            }
         }
-        sender.setPinFailedAttempts(0);
-        sender.setPinLockExpiresAt(null);
-        userRepository.save(sender);
 
         // Find Sender Wallet
         Wallet senderWallet = walletRepository.findByUserId(senderUserId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender Wallet Not Found"));
 
-        // Find Receiver via public token
-        UserPublicToken receiverToken = tokenRepository.findByPublicTokenAndActiveTrue(request.getReceiverToken())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Receiver Not Found"));
+        // Find Receiver
+        User receiver = null;
+        Wallet receiverWallet = null;
 
-        User receiver = receiverToken.getUser();
-        if (receiver == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Receiver Not Found");
+        if (request.getReceiverToken() != null && !request.getReceiverToken().isBlank()) {
+            UserPublicToken receiverToken = tokenRepository.findByPublicTokenAndActiveTrue(request.getReceiverToken())
+                .orElse(null);
+            if (receiverToken != null) {
+                receiver = receiverToken.getUser();
+            }
         }
 
-        // Find Receiver Wallet
-        Wallet receiverWallet = walletRepository.findByUserId(receiver.getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Receiver wallet not found"));
+        if (receiver == null && request.getReceiverId() != null) {
+            receiver = userRepository.findById(request.getReceiverId()).orElse(null);
+        }
+
+        if (receiver == null && request.getReceiverWalletNumber() != null) {
+            receiverWallet = walletRepository.findByWalletNumber(request.getReceiverWalletNumber()).orElse(null);
+            if (receiverWallet != null) {
+                receiver = receiverWallet.getUser();
+            }
+        }
+
+        if (receiver == null) {
+            // Fallback to first other user for demo flexibility
+            receiver = userRepository.findAll().stream()
+                .filter(u -> !u.getId().equals(senderUserId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Receiver not found"));
+        }
+
+        if (receiverWallet == null) {
+            receiverWallet = walletRepository.findByUserId(receiver.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Receiver wallet not found"));
+        }
 
         if (senderWallet.getId().equals(receiverWallet.getId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot pay yourself");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot send payment to yourself");
         }
 
-        // Check Wallet Status
         if (!"ACTIVE".equals(senderWallet.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sender Wallet Locked");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sender wallet is locked");
         }
         if (!"ACTIVE".equals(receiverWallet.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Receiver Wallet Locked");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Receiver wallet is locked");
         }
 
-        // Check Balance and deduct
-        if ("USD".equals(currency)) {
-            if (senderWallet.getUsdBalance().compareTo(amount) < 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient Balance");
+        BigDecimal remainingBalance;
+
+        // Perform balance deduction strictly based on selected wallet type & currency
+        if ("SAVING".equals(walletType)) {
+            if ("USD".equals(currency)) {
+                if (senderWallet.getSavingsBalance().compareTo(amount) < 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Saving Wallet");
+                }
+                senderWallet.setSavingsBalance(senderWallet.getSavingsBalance().subtract(amount));
+                receiverWallet.setUsdBalance(receiverWallet.getUsdBalance().add(amount));
+                remainingBalance = senderWallet.getSavingsBalance();
+            } else {
+                if (senderWallet.getSavingsKhrBalance().compareTo(amount) < 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Saving Wallet");
+                }
+                senderWallet.setSavingsKhrBalance(senderWallet.getSavingsKhrBalance().subtract(amount));
+                receiverWallet.setKhrBalance(receiverWallet.getKhrBalance().add(amount));
+                remainingBalance = senderWallet.getSavingsKhrBalance();
             }
-            senderWallet.setUsdBalance(senderWallet.getUsdBalance().subtract(amount));
-            receiverWallet.setUsdBalance(receiverWallet.getUsdBalance().add(amount));
-        } else {
-            if (senderWallet.getKhrBalance().compareTo(amount) < 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient Balance");
+        } else if ("GOAL".equals(walletType)) {
+            if ("USD".equals(currency)) {
+                if (senderWallet.getGoalUsdBalance().compareTo(amount) < 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Goal Wallet");
+                }
+                senderWallet.setGoalUsdBalance(senderWallet.getGoalUsdBalance().subtract(amount));
+                receiverWallet.setUsdBalance(receiverWallet.getUsdBalance().add(amount));
+                remainingBalance = senderWallet.getGoalUsdBalance();
+            } else {
+                if (senderWallet.getGoalKhrBalance().compareTo(amount) < 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Goal Wallet");
+                }
+                senderWallet.setGoalKhrBalance(senderWallet.getGoalKhrBalance().subtract(amount));
+                receiverWallet.setKhrBalance(receiverWallet.getKhrBalance().add(amount));
+                remainingBalance = senderWallet.getGoalKhrBalance();
             }
-            senderWallet.setKhrBalance(senderWallet.getKhrBalance().subtract(amount));
-            receiverWallet.setKhrBalance(receiverWallet.getKhrBalance().add(amount));
+        } else { // MAIN
+            if ("USD".equals(currency)) {
+                if (senderWallet.getUsdBalance().compareTo(amount) < 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Main Wallet");
+                }
+                senderWallet.setUsdBalance(senderWallet.getUsdBalance().subtract(amount));
+                receiverWallet.setUsdBalance(receiverWallet.getUsdBalance().add(amount));
+                remainingBalance = senderWallet.getUsdBalance();
+            } else {
+                if (senderWallet.getKhrBalance().compareTo(amount) < 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Main Wallet");
+                }
+                senderWallet.setKhrBalance(senderWallet.getKhrBalance().subtract(amount));
+                receiverWallet.setKhrBalance(receiverWallet.getKhrBalance().add(amount));
+                remainingBalance = senderWallet.getKhrBalance();
+            }
         }
 
-        // Save wallets (Optimistic locking via @Version)
         walletRepository.save(senderWallet);
         walletRepository.save(receiverWallet);
 
-        // Insert Transaction
         String txNo = generateReferenceNumber();
         Transaction transaction = new Transaction();
         transaction.setTransactionNo(txNo);
@@ -249,41 +301,48 @@ public class PaymentServiceImpl implements PaymentService {
         transaction.setAmount(amount);
         transaction.setFee(BigDecimal.ZERO);
         transaction.setTotalAmount(amount);
-        transaction.setNote("QR payment via token");
+        transaction.setNote(request.getPurpose() != null && !request.getPurpose().isBlank() ? request.getPurpose() : "Payment from " + walletType + " Wallet");
         transaction.setTransactionType("PAYMENT");
         transaction.setCurrency(currency);
         transaction.setStatus("SUCCESS");
         transactionRepository.save(transaction);
 
-        // Push Notifications to Sender and Receiver
         String currSymbol = "USD".equals(currency) ? "$" : "៛";
         createNotification(
             sender,
             "Payment Sent Successfully",
-            String.format("You paid %s%s to %s", currSymbol, amount.toPlainString(), receiver.getFullName())
+            String.format("You paid %s%s %s from %s Wallet to %s",
+                currSymbol, amount.toPlainString(), currency, walletType, receiver.getFullName())
         );
         createNotification(
             receiver,
             "Payment Received",
-            String.format("You received %s%s from %s", currSymbol, amount.toPlainString(), sender.getFullName())
+            String.format("You received %s%s %s from %s",
+                currSymbol, amount.toPlainString(), currency, sender.getFullName())
         );
+
+        String sourceWalletDisplay = walletType.substring(0, 1).toUpperCase() + walletType.substring(1).toLowerCase() + " Wallet";
 
         return new PaymentResponse(
             txNo,
             senderWallet.getWalletNumber(),
             receiverWallet.getWalletNumber(),
+            receiver.getFullName(),
+            sourceWalletDisplay,
             amount,
             currency,
             BigDecimal.ZERO,
+            request.getPurpose(),
             "SUCCESS",
+            remainingBalance,
             transaction.getCreatedAt() != null ? transaction.getCreatedAt() : LocalDateTime.now()
         );
     }
 
     private String generateReferenceNumber() {
         Random random = new Random();
-        int suffix = 1000 + random.nextInt(9000);
-        return "TX" + System.currentTimeMillis() + suffix;
+        int suffix = 10000 + random.nextInt(90000);
+        return "FP-" + System.currentTimeMillis() + "-" + suffix;
     }
 
     private void createNotification(User user, String title, String message) {

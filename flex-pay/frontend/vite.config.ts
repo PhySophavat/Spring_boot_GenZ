@@ -13,14 +13,24 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src")
     }
   },
+  // Polyfill for sockjs-client which uses Node's 'global' in browser context
+  define: {
+    global: "globalThis",
+  },
   server: {
     host: "127.0.0.1",
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:8081",
+        target: "http://127.0.0.1:8082",
         changeOrigin: true
+      },
+      "/ws": {
+        target: "http://127.0.0.1:8082",
+        changeOrigin: true,
+        ws: true
       }
     }
   }
 });
+

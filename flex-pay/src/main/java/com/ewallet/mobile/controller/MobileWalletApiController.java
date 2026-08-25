@@ -50,8 +50,21 @@ public class MobileWalletApiController {
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("usdBalance", wallet != null ? wallet.getSavingsBalance() : new BigDecimal("120.00"));
-        response.put("khrBalance", new BigDecimal("500000.00"));
+        response.put("khrBalance", wallet != null ? wallet.getSavingsKhrBalance() : new BigDecimal("500000.00"));
         response.put("goalProgress", 60);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/wallet/goal")
+    @Operation(summary = "Get mobile goal wallet")
+    public ResponseEntity<Map<String, Object>> getGoalWallet(Authentication authentication) {
+        Long userId = getUserId(authentication);
+        Wallet wallet = walletRepository.findByUserId(userId).orElse(null);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("usdBalance", wallet != null ? wallet.getGoalUsdBalance() : new BigDecimal("250.00"));
+        response.put("khrBalance", wallet != null ? wallet.getGoalKhrBalance() : new BigDecimal("1000000.00"));
+        response.put("goalName", "New Laptop");
         return ResponseEntity.ok(response);
     }
 

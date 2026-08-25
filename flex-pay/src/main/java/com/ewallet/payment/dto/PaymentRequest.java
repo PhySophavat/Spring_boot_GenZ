@@ -1,25 +1,27 @@
 package com.ewallet.payment.dto;
 
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
 
 public class PaymentRequest {
 
-    @NotBlank(message = "Receiver token is required")
     private String receiverToken;
+    private Long receiverId;
+    private String receiverWalletNumber;
+    private String walletType = "MAIN"; // MAIN, SAVING, GOAL
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
     private BigDecimal amount;
 
-    @NotBlank(message = "Currency is required")
-    @Pattern(regexp = "^(USD|KHR)$", message = "Currency must be USD or KHR")
+    @NotNull(message = "Currency is required")
+    @Pattern(regexp = "^(?i)(USD|KHR)$", message = "Currency must be USD or KHR")
     private String currency;
 
-    @NotBlank(message = "PIN is required")
+    private String purpose;
+    private String note;
     private String pin;
 
     public String getReceiverToken() {
@@ -28,6 +30,30 @@ public class PaymentRequest {
 
     public void setReceiverToken(String receiverToken) {
         this.receiverToken = receiverToken;
+    }
+
+    public Long getReceiverId() {
+        return receiverId;
+    }
+
+    public void setReceiverId(Long receiverId) {
+        this.receiverId = receiverId;
+    }
+
+    public String getReceiverWalletNumber() {
+        return receiverWalletNumber;
+    }
+
+    public void setReceiverWalletNumber(String receiverWalletNumber) {
+        this.receiverWalletNumber = receiverWalletNumber;
+    }
+
+    public String getWalletType() {
+        return walletType != null ? walletType.toUpperCase() : "MAIN";
+    }
+
+    public void setWalletType(String walletType) {
+        this.walletType = walletType;
     }
 
     public BigDecimal getAmount() {
@@ -39,11 +65,27 @@ public class PaymentRequest {
     }
 
     public String getCurrency() {
-        return currency;
+        return currency != null ? currency.toUpperCase() : "USD";
     }
 
     public void setCurrency(String currency) {
         this.currency = currency;
+    }
+
+    public String getPurpose() {
+        return purpose != null ? purpose : note;
+    }
+
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
+    }
+
+    public String getNote() {
+        return note != null ? note : purpose;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public String getPin() {

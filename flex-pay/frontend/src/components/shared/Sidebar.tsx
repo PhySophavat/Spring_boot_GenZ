@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Wallet, ArrowRightLeft, BookUser, CreditCard } from "lucide-react";
+import { LayoutDashboard, Users, Wallet, ArrowRightLeft, BookUser, CreditCard, MessageSquare } from "lucide-react";
 import logoWithoutBg from "../../../logowithoutbg.png";
 
 const NAV_ITEMS = [
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { label: "Cards",        icon: CreditCard,        key: "cards"      },
   { label: "Wallets",      icon: Wallet,            key: "wallet"     },
   { label: "Transactions", icon: ArrowRightLeft,    key: "payments"   },
+  { label: "Chat",         icon: MessageSquare,     key: "chat"       },
 ] as const;
 
 type PageKey = (typeof NAV_ITEMS)[number]["key"];

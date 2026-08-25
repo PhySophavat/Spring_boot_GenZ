@@ -15,6 +15,9 @@ public class WalletResponse {
     private String phoneNumber;
     private BigDecimal usdBalance;
     private BigDecimal savingsBalance;
+    private BigDecimal savingsKhrBalance;
+    private BigDecimal goalUsdBalance;
+    private BigDecimal goalKhrBalance;
     private BigDecimal khrBalance;
     private String status;
     private boolean hasPin;
@@ -103,6 +106,30 @@ public class WalletResponse {
 
     public void setSavingsBalance(BigDecimal savingsBalance) {
         this.savingsBalance = savingsBalance;
+    }
+
+    public BigDecimal getSavingsKhrBalance() {
+        return savingsKhrBalance;
+    }
+
+    public void setSavingsKhrBalance(BigDecimal savingsKhrBalance) {
+        this.savingsKhrBalance = savingsKhrBalance;
+    }
+
+    public BigDecimal getGoalUsdBalance() {
+        return goalUsdBalance;
+    }
+
+    public void setGoalUsdBalance(BigDecimal goalUsdBalance) {
+        this.goalUsdBalance = goalUsdBalance;
+    }
+
+    public BigDecimal getGoalKhrBalance() {
+        return goalKhrBalance;
+    }
+
+    public void setGoalKhrBalance(BigDecimal goalKhrBalance) {
+        this.goalKhrBalance = goalKhrBalance;
     }
 
     public BigDecimal getKhrBalance() {

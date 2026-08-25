@@ -8,6 +8,7 @@ import ContactsPage from "./pages/contacts/ContactsPage";
 import CardsPage from "./pages/cards/CardsPage";
 import PaymentsPage from "./pages/payments/PaymentsPage";
 import AuthPage from "./pages/auth/AuthPage";
+import AdminChat from "./pages/chat/AdminChat";
 import GlobalSearch from "./components/shared/GlobalSearch";
 import { getSession, saveSession, clearSession, type UserSession } from "./services/authService";
 
@@ -18,6 +19,7 @@ const PAGES = {
   cards:     "Cards",
   wallet:    "Wallets",
   payments:  "Transactions",
+  chat:      "Chat",
 } as const;
 
 type PageKey = keyof typeof PAGES;
@@ -145,13 +147,20 @@ export default function App() {
         </header>
 
         {/* Main Content */}
-        <main style={{ flex: 1, overflowY: "auto", padding: "28px 28px" }}>
+        <main style={{
+          flex: 1,
+          overflowY: activePage === "chat" ? "hidden" : "auto",
+          padding: activePage === "chat" ? "0" : "28px 28px",
+          display: activePage === "chat" ? "flex" : "block",
+          flexDirection: "column",
+        }}>
           {activePage === "dashboard" && <DashboardPage />}
           {activePage === "users"     && <UsersPage />}
           {activePage === "contacts"  && <ContactsPage />}
           {activePage === "cards"     && <CardsPage />}
           {activePage === "wallet"    && <WalletsPage />}
           {activePage === "payments"  && <PaymentsPage />}
+          {activePage === "chat"      && <AdminChat />}
         </main>
 
         {/* Footer */}

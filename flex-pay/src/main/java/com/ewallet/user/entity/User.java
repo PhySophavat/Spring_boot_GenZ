@@ -46,6 +46,14 @@ public class User {
     @Column(name = "account_status", nullable = false, length = 20)
     private String accountStatus = "ACTIVE";
 
+    /** Role used for authorization: USER | ADMIN | SUPER_ADMIN */
+    @Column(name = "role", nullable = false, length = 20)
+    private String role = "USER";
+
+    /** Optional profile image URL for chat avatars */
+    @Column(name = "profile_image", length = 500)
+    private String profileImage;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -165,5 +173,21 @@ public class User {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImage = profileImage;
     }
 }
