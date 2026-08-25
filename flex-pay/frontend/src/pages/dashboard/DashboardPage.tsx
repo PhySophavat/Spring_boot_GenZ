@@ -138,190 +138,169 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="flex-1 space-y-8 p-1">
+    <div className="flex-1 space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto">
       {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-8 text-white shadow-xl">
-        <div className="absolute right-0 top-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="absolute left-0 bottom-0 -ml-20 -mb-20 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl" />
-
-        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-300">
-              Admin Control Panel
-            </span>
-            <h1 className="mt-2 text-4xl font-extrabold tracking-tight sm:text-5xl">
-              Flex Pay Dashboard
-            </h1>
-            <p className="mt-2 text-slate-300 text-sm max-w-xl">
-              Real-time monitoring of multi-currency balances, user security, and transaction trends.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => void loadData()}
-            disabled={loading}
-            className="flex items-center justify-center gap-2 self-start rounded-2xl border border-white/10 bg-white/10 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:bg-white/20 active:scale-95 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh Data
-          </button>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Overview
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Monitor balances, user security, and transaction trends in real-time.
+          </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => void loadData()}
+          disabled={loading}
+          className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 active:scale-95 disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 text-slate-400 ${loading ? "animate-spin" : ""}`} />
+          Refresh Data
+        </button>
       </div>
 
       {error && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
           {error}
         </div>
       )}
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* USD Balance */}
-        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-violet-600 to-indigo-700 p-6 text-white shadow-lg transition-transform hover:-translate-y-1">
-          <div className="absolute right-0 top-0 -mr-8 -mt-8 h-24 w-24 rounded-full bg-white/10" />
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-widest text-violet-100">
-              Total USD Balance
-            </span>
-            <div className="rounded-xl bg-white/20 p-2">
+            <p className="text-sm font-medium text-slate-500">Total USD Balance</p>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
               <DollarSign className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-6">
-            <h3 className="text-3xl font-extrabold tracking-tight">
+          <div className="mt-4">
+            <h3 className="text-2xl font-bold text-slate-900">
               {loading ? (
-                <span className="inline-block h-8 w-32 animate-pulse rounded-lg bg-white/20" />
+                <span className="inline-block h-8 w-32 animate-pulse rounded bg-slate-100" />
               ) : (
                 formatUsd(summary?.totalUsdBalance ?? 0)
               )}
             </h3>
-            <p className="mt-2 text-xs text-violet-200">Aggregated across all wallets</p>
+            <p className="mt-1 text-xs text-slate-500">Aggregated across all wallets</p>
           </div>
         </div>
 
         {/* KHR Balance */}
-        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-emerald-500 to-teal-700 p-6 text-white shadow-lg transition-transform hover:-translate-y-1">
-          <div className="absolute right-0 top-0 -mr-8 -mt-8 h-24 w-24 rounded-full bg-white/10" />
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-widest text-emerald-100">
-              Total KHR Balance
-            </span>
-            <div className="rounded-xl bg-white/20 p-2">
+            <p className="text-sm font-medium text-slate-500">Total KHR Balance</p>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
               <Wallet className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-6">
-            <h3 className="text-3xl font-extrabold tracking-tight">
+          <div className="mt-4">
+            <h3 className="text-2xl font-bold text-slate-900">
               {loading ? (
-                <span className="inline-block h-8 w-32 animate-pulse rounded-lg bg-white/20" />
+                <span className="inline-block h-8 w-32 animate-pulse rounded bg-slate-100" />
               ) : (
                 formatKhr(summary?.totalKhrBalance ?? 0)
               )}
             </h3>
-            <p className="mt-2 text-xs text-emerald-200">Aggregated across all wallets</p>
+            <p className="mt-1 text-xs text-slate-500">Aggregated across all wallets</p>
           </div>
         </div>
 
         {/* Total Transactions */}
-        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-sky-500 to-blue-600 p-6 text-white shadow-lg transition-transform hover:-translate-y-1">
-          <div className="absolute right-0 top-0 -mr-8 -mt-8 h-24 w-24 rounded-full bg-white/10" />
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-widest text-sky-100">
-              Total Transactions
-            </span>
-            <div className="rounded-xl bg-white/20 p-2">
+            <p className="text-sm font-medium text-slate-500">Total Transactions</p>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
               <Activity className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-6">
-            <h3 className="text-3xl font-extrabold tracking-tight">
+          <div className="mt-4">
+            <h3 className="text-2xl font-bold text-slate-900">
               {loading ? (
-                <span className="inline-block h-8 w-16 animate-pulse rounded-lg bg-white/20" />
+                <span className="inline-block h-8 w-16 animate-pulse rounded bg-slate-100" />
               ) : (
                 summary?.totalTransactionsCount ?? 0
               )}
             </h3>
-            <p className="mt-2 text-xs text-sky-200">All payments, deposits, transfers</p>
+            <p className="mt-1 text-xs text-slate-500">All payments and transfers</p>
           </div>
         </div>
 
         {/* Today's Payments */}
-        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-rose-500 to-pink-600 p-6 text-white shadow-lg transition-transform hover:-translate-y-1">
-          <div className="absolute right-0 top-0 -mr-8 -mt-8 h-24 w-24 rounded-full bg-white/10" />
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-widest text-rose-100">
-              Today's Payments
-            </span>
-            <div className="rounded-xl bg-white/20 p-2">
+            <p className="text-sm font-medium text-slate-500">Today's Payments</p>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-600">
               <Calendar className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-6">
-            <h3 className="text-2xl font-extrabold tracking-tight">
+          <div className="mt-4 flex items-baseline gap-2">
+            <h3 className="text-2xl font-bold text-slate-900">
               {loading ? (
-                <span className="inline-block h-7 w-24 animate-pulse rounded-lg bg-white/20" />
+                <span className="inline-block h-8 w-24 animate-pulse rounded bg-slate-100" />
               ) : (
-                `${summary?.todayPaymentsCount ?? 0} payments`
+                summary?.todayPaymentsCount ?? 0
               )}
             </h3>
-            <div className="mt-2 text-xs text-rose-100 space-y-0.5">
-              <div>USD: {summary ? formatUsd(summary.todayPaymentsAmountUsd) : "$0.00"}</div>
-              <div>KHR: {summary ? formatKhr(summary.todayPaymentsAmountKhr) : "៛0"}</div>
-            </div>
+          </div>
+          <div className="mt-1 text-xs font-medium text-slate-500">
+            {summary ? formatUsd(summary.todayPaymentsAmountUsd) : "$0.00"} <span className="mx-1 text-slate-300">•</span> {summary ? formatKhr(summary.todayPaymentsAmountKhr) : "៛0"}
           </div>
         </div>
       </div>
 
       {/* Analytics Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         
         {/* Trend Area Chart */}
-        <div className="lg:col-span-2 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-slate-800">Transaction Volume Trends</h3>
-            <p className="text-xs text-slate-500">Weekly USD and KHR transaction volume comparison.</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+          <div className="mb-6">
+            <h3 className="text-base font-semibold text-slate-900">Transaction Volume Trends</h3>
+            <p className="text-sm text-slate-500">Weekly USD and KHR transaction volume comparison.</p>
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={transactionTrends} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <AreaChart data={transactionTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorUsd" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/>
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorKhr" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dx={-10} tickFormatter={(value) => `$${value}`} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dx={-10} tickFormatter={(value) => "$" + value} />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#64748b', paddingTop: '20px' }} />
-                <Area type="monotone" dataKey="usd" name="USD Volume" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorUsd)" />
-                <Area type="monotone" dataKey="khr" name="KHR Volume" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorKhr)" />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#64748b', paddingTop: '10px' }} />
+                <Area type="monotone" dataKey="usd" name="USD Volume" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorUsd)" />
+                <Area type="monotone" dataKey="khr" name="KHR Volume" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorKhr)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Security Compliance Donut */}
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col">
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-slate-800">User Security Compliance</h3>
-            <p className="text-xs text-slate-500">Proportion of users with PIN setup.</p>
+        <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-2">
+            <h3 className="text-base font-semibold text-slate-900">User Security Compliance</h3>
+            <p className="text-sm text-slate-500">Proportion of users with PIN setup.</p>
           </div>
-          <div className="flex-1 min-h-[220px]">
+          <div className="min-h-[220px] flex-1">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={pinSecurityData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={70}
-                  outerRadius={90}
+                  innerRadius={65}
+                  outerRadius={85}
                   paddingAngle={5}
                   dataKey="value"
                   stroke="none"
@@ -330,29 +309,29 @@ export default function DashboardPage() {
                     <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : '#f43f5e'} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-4 bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
+          <div className="mt-2 flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600">
-                <ShieldOff size={20} />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                <ShieldOff size={16} />
               </div>
               <div>
-                <p className="text-xs font-semibold text-slate-500">At Risk Users</p>
-                <p className="text-lg font-bold text-slate-800">{pinSecurityData[1].value}</p>
+                <p className="text-xs font-medium text-slate-500">At Risk Users</p>
+                <p className="text-base font-semibold text-slate-900">{pinSecurityData[1].value}</p>
               </div>
             </div>
           </div>
         </div>
         
         {/* Transaction Types Bar Chart */}
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-slate-800">Activity by Type</h3>
-            <p className="text-xs text-slate-500">Distribution of user operations.</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-6">
+            <h3 className="text-base font-semibold text-slate-900">Activity by Type</h3>
+            <p className="text-sm text-slate-500">Distribution of user operations.</p>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -360,8 +339,8 @@ export default function DashboardPage() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="count" name="Count" fill="#6366f1" radius={[6, 6, 0, 0]}>
+                <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Bar dataKey="count" name="Count" fill="#6366f1" radius={[4, 4, 0, 0]}>
                   {transactionTypesData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
@@ -372,19 +351,19 @@ export default function DashboardPage() {
         </div>
 
         {/* Currency Allocation Pie */}
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-slate-800">Balance Allocation</h3>
-            <p className="text-xs text-slate-500">USD vs KHR aggregate total values.</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-2">
+            <h3 className="text-base font-semibold text-slate-900">Balance Allocation</h3>
+            <p className="text-sm text-slate-500">USD vs KHR aggregate total values.</p>
           </div>
-          <div className="h-64">
+          <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={walletCurrencyData}
                   cx="50%"
                   cy="50%"
-                  outerRadius={90}
+                  outerRadius={85}
                   dataKey="value"
                   stroke="none"
                   labelLine={false}
@@ -393,7 +372,7 @@ export default function DashboardPage() {
                     const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
                     const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
                     return (
-                      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="bold">
+                      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="600">
                         {`${(percent * 100).toFixed(0)}%`}
                       </text>
                     );
@@ -403,7 +382,7 @@ export default function DashboardPage() {
                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
               </PieChart>
             </ResponsiveContainer>
@@ -411,37 +390,37 @@ export default function DashboardPage() {
         </div>
 
         {/* Summary Mini Cards */}
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4 justify-center">
-           <div className="bg-indigo-50 rounded-2xl p-5 flex items-center justify-between border border-indigo-100">
+        <div className="flex flex-col justify-center gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+           <div className="flex items-center justify-between rounded-lg border border-slate-100 p-4 transition-colors hover:bg-slate-50">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
-                <Users size={24} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                <Users size={18} />
               </div>
               <div>
-                <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Total Users</p>
-                <p className="text-3xl font-extrabold text-indigo-900 mt-1">{loading ? "—" : wallets.length}</p>
+                <p className="text-xs font-medium text-slate-500">Total Users</p>
+                <p className="mt-0.5 text-xl font-bold text-slate-900">{loading ? "—" : wallets.length}</p>
               </div>
             </div>
           </div>
-          <div className="bg-emerald-50 rounded-2xl p-5 flex items-center justify-between border border-emerald-100">
+          <div className="flex items-center justify-between rounded-lg border border-slate-100 p-4 transition-colors hover:bg-slate-50">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
-                <TrendingUp size={24} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                <TrendingUp size={18} />
               </div>
               <div>
-                <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Active Wallets</p>
-                <p className="text-3xl font-extrabold text-emerald-900 mt-1">{loading ? "—" : activeWallets}</p>
+                <p className="text-xs font-medium text-slate-500">Active Wallets</p>
+                <p className="mt-0.5 text-xl font-bold text-slate-900">{loading ? "—" : activeWallets}</p>
               </div>
             </div>
           </div>
-          <div className="bg-rose-50 rounded-2xl p-5 flex items-center justify-between border border-rose-100">
+          <div className="flex items-center justify-between rounded-lg border border-slate-100 p-4 transition-colors hover:bg-slate-50">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600">
-                <ShieldOff size={24} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                <ShieldOff size={18} />
               </div>
               <div>
-                <p className="text-xs font-semibold text-rose-600 uppercase tracking-wider">Risk Accounts</p>
-                <p className="text-3xl font-extrabold text-rose-900 mt-1">{loading ? "—" : walletsWithoutPin}</p>
+                <p className="text-xs font-medium text-slate-500">Risk Accounts</p>
+                <p className="mt-0.5 text-xl font-bold text-slate-900">{loading ? "—" : walletsWithoutPin}</p>
               </div>
             </div>
           </div>
@@ -449,26 +428,26 @@ export default function DashboardPage() {
       </div>
 
       {/* Filters + Recent Transactions Table */}
-      <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-md">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900">
               Recent Transactions
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="mt-0.5 text-sm text-slate-500">
               {transactions.length} transaction{transactions.length !== 1 ? "s" : ""} loaded
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Currency Filter */}
-            <div className="inline-flex rounded-xl bg-slate-100 p-1 text-xs">
-              {(["ALL", "USD", "KHR"] as const).map((c) => (
+            <div className="inline-flex rounded-lg bg-slate-100 p-0.5">
+              {["ALL", "USD", "KHR"].map((c) => (
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setCurrencyFilter(c)}
-                  className={`rounded-lg px-3 py-1.5 font-medium transition ${
+                  onClick={() => setCurrencyFilter(c as any)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                     currencyFilter === c ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
                   }`}
                 >
@@ -478,18 +457,18 @@ export default function DashboardPage() {
             </div>
 
             {/* Status Filter */}
-            <div className="inline-flex rounded-xl bg-slate-100 p-1 text-xs">
-              {(["ALL", "SUCCESS", "FAILED"] as const).map((s) => (
+            <div className="inline-flex rounded-lg bg-slate-100 p-0.5">
+              {["ALL", "SUCCESS", "FAILED"].map((s) => (
                 <button
                   key={s}
                   type="button"
-                  onClick={() => setStatusFilter(s)}
-                  className={`rounded-lg px-3 py-1.5 font-medium transition ${
+                  onClick={() => setStatusFilter(s as any)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                     statusFilter === s
                       ? s === "SUCCESS"
-                        ? "bg-white text-emerald-600 shadow-sm"
+                        ? "bg-white text-emerald-700 shadow-sm"
                         : s === "FAILED"
-                        ? "bg-white text-rose-600 shadow-sm"
+                        ? "bg-white text-rose-700 shadow-sm"
                         : "bg-white text-slate-900 shadow-sm"
                       : "text-slate-500 hover:text-slate-900"
                   }`}
@@ -501,25 +480,25 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100">
-          <table className="min-w-full divide-y divide-slate-100 text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-200 text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-6 py-4">Transaction No</th>
-                <th className="px-6 py-4">Sender</th>
-                <th className="px-6 py-4">Receiver</th>
-                <th className="px-6 py-4">Amount</th>
-                <th className="px-6 py-4">Note</th>
-                <th className="px-6 py-4">Type</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Date</th>
+                <th className="px-5 py-3">Transaction ID</th>
+                <th className="px-5 py-3">Sender</th>
+                <th className="px-5 py-3">Receiver</th>
+                <th className="px-5 py-3">Amount</th>
+                <th className="px-5 py-3">Note</th>
+                <th className="px-5 py-3">Type</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
               {loading && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-10 text-center text-slate-400">
-                    <RefreshCw className="mx-auto h-5 w-5 animate-spin text-slate-400 mb-2" />
+                  <td colSpan={8} className="px-5 py-12 text-center text-slate-400">
+                    <RefreshCw className="mx-auto mb-2 h-5 w-5 animate-spin text-slate-400" />
                     Loading transaction records...
                   </td>
                 </tr>
@@ -527,7 +506,7 @@ export default function DashboardPage() {
 
               {!loading && transactions.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-10 text-center text-slate-400">
+                  <td colSpan={8} className="px-5 py-12 text-center text-slate-500">
                     No transactions found for the selected filters.
                   </td>
                 </tr>
@@ -535,45 +514,45 @@ export default function DashboardPage() {
 
               {!loading &&
                 transactions.slice(0, 10).map((tx) => (
-                  <tr key={tx.id} className="hover:bg-slate-50 transition">
-                    <td className="px-6 py-4 font-mono font-medium text-indigo-600 text-xs">
+                  <tr key={tx.id} className="group hover:bg-slate-50 transition-colors">
+                    <td className="px-5 py-3 font-mono text-xs font-medium text-slate-600">
                       {tx.referenceNumber}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-800">{tx.senderName}</div>
-                      <div className="text-xs text-slate-400">#{tx.senderWalletNumber}</div>
+                    <td className="px-5 py-3">
+                      <div className="font-medium text-slate-900">{tx.senderName}</div>
+                      <div className="text-xs text-slate-500">{tx.senderWalletNumber}</div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-800">{tx.receiverName}</div>
-                      <div className="text-xs text-slate-400">#{tx.receiverWalletNumber}</div>
+                    <td className="px-5 py-3">
+                      <div className="font-medium text-slate-900">{tx.receiverName}</div>
+                      <div className="text-xs text-slate-500">{tx.receiverWalletNumber}</div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900">
+                    <td className="px-5 py-3">
+                      <div className="font-semibold text-slate-900">
                         {tx.currency === "USD" ? formatUsd(tx.amount) : formatKhr(tx.amount)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 max-w-[160px]">
+                    <td className="max-w-[160px] px-5 py-3">
                       {tx.senderName ? (
-                        <span className="block truncate text-xs text-slate-500 italic">
+                        <span className="block truncate text-xs text-slate-500">
                           Paid by {tx.senderName}
                         </span>
                       ) : (
                         <span className="text-xs text-slate-300">—</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+                    <td className="px-5 py-3">
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
                         {tx.transactionType}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-3">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${
                           tx.status === "SUCCESS"
-                            ? "bg-emerald-50 text-emerald-700"
+                            ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
                             : tx.status === "FAILED"
-                            ? "bg-rose-50 text-rose-700"
-                            : "bg-slate-50 text-slate-700"
+                            ? "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20"
+                            : "bg-slate-50 text-slate-700 ring-1 ring-inset ring-slate-600/20"
                         }`}
                       >
                         {tx.status === "SUCCESS" && <CheckCircle2 className="h-3 w-3" />}
@@ -582,7 +561,7 @@ export default function DashboardPage() {
                         {tx.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-500 whitespace-nowrap text-xs">
+                    <td className="whitespace-nowrap px-5 py-3 text-xs text-slate-500">
                       {new Date(tx.createdAt).toLocaleString()}
                     </td>
                   </tr>
