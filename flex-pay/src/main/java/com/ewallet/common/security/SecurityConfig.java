@@ -58,6 +58,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,  "/api/users").permitAll()
                 .requestMatchers("/api/wallets/me/deposit").permitAll()
                 .requestMatchers("/api/transactions/transfer").permitAll()
+                .requestMatchers("/api/qr/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/admin/dashboard/**").permitAll()
                 // Chat REST API — admin only

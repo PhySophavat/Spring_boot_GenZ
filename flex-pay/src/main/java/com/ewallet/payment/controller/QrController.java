@@ -89,6 +89,42 @@ public class QrController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping(value = "/api/qr/decode", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload and decode a QR code image")
+    public ResponseEntity<java.util.Map<String, Object>> decodeQrCode(
+        @RequestParam("file") org.springframework.web.multipart.MultipartFile file
+    ) {
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No image file provided");
+        }
+        try {
+            String rawQrText = qrCodeService.decodeQrImage(file.getInputStream());
+            
+            // Try extracting token if JSON: {"token":"USR_..."}
+            String token = rawQrText;
+            if (rawQrText.contains("\"token\"")) {
+                int start = rawQrText.indexOf("\"token\":") + 8;
+                int valStart = rawQrText.indexOf("\"", start);
+                if (valStart != -1) {
+                    int valEnd = rawQrText.indexOf("\"", valStart + 1);
+                    if (valEnd != -1) {
+                        token = rawQrText.substring(valStart + 1, valEnd);
+                    }
+                }
+            }
+
+            java.util.Map<String, Object> result = new java.util.HashMap<>();
+            result.put("rawText", rawQrText);
+            result.put("token", token);
+            result.put("success", true);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to decode QR: " + e.getMessage());
+        }
+    }
+
     private User getAuthenticatedUser(Authentication authentication) {
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
