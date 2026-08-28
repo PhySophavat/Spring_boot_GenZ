@@ -32,6 +32,8 @@ export function WalletTable({
             <th className="px-6 py-3.5">Main KHR</th>
             <th className="px-6 py-3.5">Saving USD</th>
             <th className="px-6 py-3.5">Saving KHR</th>
+            <th className="px-6 py-3.5">Goal USD</th>
+            <th className="px-6 py-3.5">Goal KHR</th>
             <th className="px-6 py-3.5">PIN Status</th>
             <th className="px-6 py-3.5">Created Date</th>
             <th className="px-6 py-3.5 text-right">Action</th>
@@ -42,7 +44,7 @@ export function WalletTable({
 
           {!loading && wallets.length === 0 && (
             <tr>
-              <td colSpan={12}>
+              <td colSpan={14}>
                 <EmptyState onResetFilters={onResetFilters} />
               </td>
             </tr>
@@ -52,7 +54,9 @@ export function WalletTable({
             wallets.length > 0 &&
             wallets.map((wallet) => {
               const savingUsd = wallet.savingsBalance ?? (wallet.usdBalance > 0 ? 120.0 : 0.0);
-              const savingKhr = wallet.khrBalance > 0 ? 500000.0 : 0.0;
+              const savingKhr = wallet.savingsKhrBalance ?? (wallet.khrBalance > 0 ? 500000.0 : 0.0);
+              const goalUsd = wallet.goalUsdBalance ?? 250.0;
+              const goalKhr = wallet.goalKhrBalance ?? 1000000.0;
 
               return (
                 <tr
@@ -103,6 +107,16 @@ export function WalletTable({
                   {/* Saving KHR */}
                   <td className="px-6 py-4 font-['Manrope',sans-serif] text-xs font-bold text-amber-600">
                     {formatKhr(savingKhr)}
+                  </td>
+
+                  {/* Goal USD */}
+                  <td className="px-6 py-4 font-['Manrope',sans-serif] text-xs font-bold text-teal-700">
+                    {formatUsd(goalUsd)}
+                  </td>
+
+                  {/* Goal KHR */}
+                  <td className="px-6 py-4 font-['Manrope',sans-serif] text-xs font-bold text-teal-600">
+                    {formatKhr(goalKhr)}
                   </td>
 
                   {/* PIN Status */}

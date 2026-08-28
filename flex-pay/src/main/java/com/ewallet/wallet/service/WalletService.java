@@ -13,4 +13,5 @@ public interface WalletService {
     boolean verifyPin(Long userId, String pin);
     void changePin(Long userId, String currentPin, String newPin, String confirmPin);
     WalletResponse deposit(Long userId, DepositRequest request);
+    void adminResetIndividualBalances();
 }

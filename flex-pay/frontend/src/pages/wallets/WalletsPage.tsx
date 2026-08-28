@@ -5,6 +5,7 @@ import type {
   WalletInfo,
   WalletSummary,
   SavingSummary,
+  GoalSummary,
   NotificationSummary,
   PinFilter,
   BalanceFilter,
@@ -15,6 +16,7 @@ import {
   getWallets,
   getWalletSummary,
   getSavingSummary,
+  getGoalSummary,
   getNotificationSummary,
 } from "../../services/walletService";
 
@@ -30,6 +32,7 @@ export default function WalletsPage() {
   const [wallets, setWallets] = useState<WalletInfo[]>([]);
   const [walletSummary, setWalletSummary] = useState<WalletSummary>({ usdBalance: 0, khrBalance: 0 });
   const [savingSummary, setSavingSummary] = useState<SavingSummary>({ savingUsd: 0, savingKhr: 0 });
+  const [goalSummary, setGoalSummary] = useState<GoalSummary>({ goalUsd: 0, goalKhr: 0 });
   const [notificationSummary, setNotificationSummary] = useState<NotificationSummary>({
     unreadCount: 12,
     latestNotificationTime: "Jul 23, 2026 11:30 AM",
@@ -74,6 +77,9 @@ export default function WalletsPage() {
 
       const sSum = await getSavingSummary(data);
       setSavingSummary(sSum);
+
+      const gSum = await getGoalSummary(data);
+      setGoalSummary(gSum);
     } catch (err) {
       console.error("Wallet load error:", err);
       setError("Unable to load wallet data.");
@@ -220,6 +226,7 @@ export default function WalletsPage() {
       <WalletSummaryCards
         walletSummary={walletSummary}
         savingSummary={savingSummary}
+        goalSummary={goalSummary}
         notificationSummary={notificationSummary}
         loading={loading}
       />

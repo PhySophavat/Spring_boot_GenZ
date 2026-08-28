@@ -64,6 +64,13 @@ public class WalletController {
         return ResponseEntity.ok(walletService.deposit(userId, request));
     }
 
+    @PostMapping("/api/wallets/admin/reset-balances")
+    @Operation(summary = "Admin: Reset individual wallet balances by walletNumber")
+    public ResponseEntity<Map<String, String>> adminResetBalances() {
+        walletService.adminResetIndividualBalances();
+        return ResponseEntity.ok(Map.of("message", "Wallet balances reset successfully"));
+    }
+
     private Long getAuthenticatedUserId(Authentication authentication) {
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new org.springframework.security.access.AccessDeniedException("User is not authenticated");

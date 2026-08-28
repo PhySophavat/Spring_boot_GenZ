@@ -213,21 +213,30 @@ public class PaymentServiceImpl implements PaymentService {
             }
         }
 
-        if (receiver == null) {
-            // Fallback to first other user for demo flexibility
+        if (receiver == null && request.getReceiverName() != null && !request.getReceiverName().trim().isEmpty()) {
+            final String reqName = request.getReceiverName().trim();
             receiver = userRepository.findAll().stream()
-                .filter(u -> !u.getId().equals(senderUserId))
+                .filter(u -> (u.getFullName() != null && u.getFullName().equalsIgnoreCase(reqName)) ||
+                             (u.getPhoneNumber() != null && u.getPhoneNumber().equalsIgnoreCase(reqName)) ||
+                             (u.getEmail() != null && u.getEmail().equalsIgnoreCase(reqName)))
                 .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Receiver not found"));
+                .orElse(null);
+        }
+
+        if (receiver == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Receiver not found. Please provide a valid receiver name, wallet number, or QR code.");
+        }
+
+        if (receiver.getId().equals(senderUserId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Cannot send payment to yourself");
         }
 
         if (receiverWallet == null) {
             receiverWallet = walletRepository.findByUserId(receiver.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Receiver wallet not found"));
-        }
-
-        if (senderWallet.getId().equals(receiverWallet.getId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot send payment to yourself");
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Receiver wallet not found"));
         }
 
         if (!"ACTIVE".equals(senderWallet.getStatus())) {
@@ -327,7 +336,9 @@ public class PaymentServiceImpl implements PaymentService {
             txNo,
             senderWallet.getWalletNumber(),
             receiverWallet.getWalletNumber(),
-            receiver.getFullName(),
+            (request.getReceiverName() != null && !request.getReceiverName().trim().isEmpty())
+                ? request.getReceiverName().trim()
+                : receiver.getFullName(),
             sourceWalletDisplay,
             amount,
             currency,

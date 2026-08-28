@@ -36,8 +36,8 @@ public class MobileWalletApiController {
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("walletNumber", wallet != null ? wallet.getWalletNumber() : "653498");
-        response.put("usdBalance", wallet != null ? wallet.getUsdBalance() : new BigDecimal("490.00"));
-        response.put("khrBalance", wallet != null ? wallet.getKhrBalance() : new BigDecimal("200000.00"));
+        response.put("usdBalance", wallet != null ? wallet.getUsdBalance() : new BigDecimal("100.00"));
+        response.put("khrBalance", wallet != null ? wallet.getKhrBalance() : new BigDecimal("10000.00"));
         response.put("isDefault", true);
         return ResponseEntity.ok(response);
     }

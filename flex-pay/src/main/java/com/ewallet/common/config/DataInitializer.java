@@ -34,48 +34,75 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (userRepository.count() == 0) {
-            // Seed Default User: SOPHAVAT PHY
-            User user = new User();
-            user.setFullName("SOPHAVAT PHY");
-            user.setPhoneNumber("012345678");
-            user.setEmail("sophavat.phy@flexpay.com");
-            user.setPasswordHash(passwordEncoder.encode("password123"));
-            user.setPinHash(passwordEncoder.encode("123456"));
-            user.setPinCreated(true);
-            user.setAccountStatus("ACTIVE");
-            user = userRepository.save(user);
+            // 1. Seed User 1: dev (SOPHAVAT PHY)
+            User user1 = new User();
+            user1.setFullName("dev");
+            user1.setPhoneNumber("012345678");
+            user1.setEmail("dev@flexpay.com");
+            user1.setPasswordHash(passwordEncoder.encode("password123"));
+            user1.setPinHash(passwordEncoder.encode("123456"));
+            user1.setPinCreated(true);
+            user1.setAccountStatus("ACTIVE");
+            user1 = userRepository.save(user1);
 
-            // Seed Wallet
-            Wallet wallet = new Wallet();
-            wallet.setUser(user);
-            wallet.setWalletId("FW8821");
-            wallet.setWalletNumber("8821");
-            wallet.setUsdBalance(new BigDecimal("230250.00"));
-            wallet.setKhrBalance(new BigDecimal("12499988.00"));
-            wallet.setStatus("ACTIVE");
-            wallet = walletRepository.save(wallet);
+            Wallet wallet1 = new Wallet();
+            wallet1.setUser(user1);
+            wallet1.setWalletId("FW497548");
+            wallet1.setWalletNumber("497548");
+            wallet1.setUsdBalance(new BigDecimal("1000.00"));
+            wallet1.setKhrBalance(new BigDecimal("100000.00"));
+            wallet1.setSavingsBalance(new BigDecimal("500.00"));
+            wallet1.setSavingsKhrBalance(new BigDecimal("2000000.00"));
+            wallet1.setGoalUsdBalance(new BigDecimal("250.00"));
+            wallet1.setGoalKhrBalance(new BigDecimal("1000000.00"));
+            wallet1.setStatus("ACTIVE");
+            wallet1 = walletRepository.save(wallet1);
 
-            // Seed Transactions
+            // 2. Seed User 2: dev1
+            User user2 = new User();
+            user2.setFullName("dev1");
+            user2.setPhoneNumber("098765432");
+            user2.setEmail("dev1@flexpay.com");
+            user2.setPasswordHash(passwordEncoder.encode("password123"));
+            user2.setPinHash(passwordEncoder.encode("123456"));
+            user2.setPinCreated(true);
+            user2.setAccountStatus("ACTIVE");
+            user2 = userRepository.save(user2);
+
+            Wallet wallet2 = new Wallet();
+            wallet2.setUser(user2);
+            wallet2.setWalletId("FW653498");
+            wallet2.setWalletNumber("653498");
+            wallet2.setUsdBalance(new BigDecimal("100.00"));
+            wallet2.setKhrBalance(new BigDecimal("10000.00"));
+            wallet2.setSavingsBalance(new BigDecimal("500.00"));
+            wallet2.setSavingsKhrBalance(new BigDecimal("2000000.00"));
+            wallet2.setGoalUsdBalance(new BigDecimal("250.00"));
+            wallet2.setGoalKhrBalance(new BigDecimal("1000000.00"));
+            wallet2.setStatus("ACTIVE");
+            wallet2 = walletRepository.save(wallet2);
+
+            // Seed Initial Transactions
             Transaction tx1 = new Transaction();
-            tx1.setSenderWallet(wallet);
-            tx1.setReceiverWallet(wallet);
+            tx1.setSenderWallet(wallet1);
+            tx1.setReceiverWallet(wallet2);
             tx1.setTransactionNo("TX10019283");
             tx1.setAmount(new BigDecimal("15.00"));
             tx1.setFee(BigDecimal.ZERO);
             tx1.setTotalAmount(new BigDecimal("15.00"));
-            tx1.setNote("Paid to SOPHAVAT PHY");
+            tx1.setNote("Transfer to dev1");
             tx1.setTransactionType("TRANSFER");
             tx1.setCurrency("USD");
             tx1.setStatus("SUCCESS");
 
             Transaction tx2 = new Transaction();
-            tx2.setSenderWallet(wallet);
-            tx2.setReceiverWallet(wallet);
+            tx2.setSenderWallet(wallet2);
+            tx2.setReceiverWallet(wallet1);
             tx2.setTransactionNo("TX10019284");
-            tx2.setAmount(new BigDecimal("50.00"));
+            tx2.setAmount(new BigDecimal("10.00"));
             tx2.setFee(BigDecimal.ZERO);
-            tx2.setTotalAmount(new BigDecimal("50.00"));
-            tx2.setNote("Paid to PHY SOPHAVAT");
+            tx2.setTotalAmount(new BigDecimal("10.00"));
+            tx2.setNote("Transfer from dev1");
             tx2.setTransactionType("TRANSFER");
             tx2.setCurrency("USD");
             tx2.setStatus("SUCCESS");

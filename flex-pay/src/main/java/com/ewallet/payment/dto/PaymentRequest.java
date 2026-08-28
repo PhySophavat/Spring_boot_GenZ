@@ -10,6 +10,7 @@ public class PaymentRequest {
     private String receiverToken;
     private Long receiverId;
     private String receiverWalletNumber;
+    private String receiverName;
     private String walletType = "MAIN"; // MAIN, SAVING, GOAL
 
     @NotNull(message = "Amount is required")
@@ -86,6 +87,14 @@ public class PaymentRequest {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public String getReceiverName() {
+        return receiverName;
+    }
+
+    public void setReceiverName(String receiverName) {
+        this.receiverName = receiverName;
     }
 
     public String getPin() {

@@ -53,14 +53,16 @@ public class SecurityConfig {
                 // Served uploaded files
                 .requestMatchers(HttpMethod.GET, "/api/admin/chat/files/**").permitAll()
                 // Legacy open endpoints
-                .requestMatchers(HttpMethod.GET,  "/api/wallets").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/api/wallets", "/api/wallets/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/wallets/*/set-pin").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/api/users").permitAll()
+                .requestMatchers("/api/mobile/**").permitAll()
                 .requestMatchers("/api/wallets/me/deposit").permitAll()
                 .requestMatchers("/api/transactions/transfer").permitAll()
                 .requestMatchers("/api/qr/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/admin/dashboard/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/wallets/admin/reset-balances").permitAll()
                 // Chat REST API — admin only
                 .requestMatchers("/api/admin/chat/**").hasRole("ADMIN")
                 // All other endpoints require authentication

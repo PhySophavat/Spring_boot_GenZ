@@ -2,14 +2,12 @@ import type {
   WalletInfo,
   WalletSummary,
   SavingSummary,
+  GoalSummary,
   NotificationSummary,
 } from "../types/wallet";
 
 const WALLETS_API_PATH = "/api/wallets";
 
-/**
- * Fetch all wallet records from Spring Boot backend REST API (/api/wallets).
- */
 export async function getWallets(): Promise<WalletInfo[]> {
   const response = await fetch(WALLETS_API_PATH);
   if (!response.ok) {
@@ -33,13 +31,9 @@ export async function setUserPin(userId: number, pin: string): Promise<void> {
   }
 }
 
-/**
- * Fetch details of a single wallet by ID or userId.
- */
 export async function getWalletDetail(id: number): Promise<WalletInfo> {
   const response = await fetch(`${WALLETS_API_PATH}/${id}`);
   if (!response.ok) {
-    // Fallback: try fetching all and finding by id
     const all = await getWallets();
     const found = all.find((w) => w.id === id || w.userId === id);
     if (!found) throw new Error(`Wallet not found for ID ${id}`);
@@ -48,9 +42,7 @@ export async function getWalletDetail(id: number): Promise<WalletInfo> {
   return (await response.json()) as WalletInfo;
 }
 
-/**
- * Calculate aggregate Main Wallet balances (USD & KHR) across all active wallets.
- */
+/** Total Main Wallet balances across all users */
 export async function getWalletSummary(walletsList?: WalletInfo[]): Promise<WalletSummary> {
   const wallets = walletsList || (await getWallets());
   const usdBalance = wallets.reduce((sum, w) => sum + (Number(w.usdBalance) || 0), 0);
@@ -58,20 +50,20 @@ export async function getWalletSummary(walletsList?: WalletInfo[]): Promise<Wall
   return { usdBalance, khrBalance };
 }
 
-/**
- * Calculate aggregate Saving Wallet balances (USD & KHR) across all active wallets.
- */
+/** Total Saving Wallet balances across all users — uses REAL API fields */
 export async function getSavingSummary(walletsList?: WalletInfo[]): Promise<SavingSummary> {
   const wallets = walletsList || (await getWallets());
-  const savingUsd = wallets.reduce(
-    (sum, w) => sum + (Number(w.savingsBalance ?? (w.usdBalance > 0 ? 120 : 0)) || 0),
-    0
-  );
-  const savingKhr = wallets.reduce(
-    (sum, w) => sum + (Number(w.khrBalance > 0 ? 500000 : 0) || 0),
-    0
-  );
+  const savingUsd = wallets.reduce((sum, w) => sum + (Number(w.savingsBalance) || 0), 0);
+  const savingKhr = wallets.reduce((sum, w) => sum + (Number(w.savingsKhrBalance) || 0), 0);
   return { savingUsd, savingKhr };
+}
+
+/** Total Goal Wallet balances across all users — uses REAL API fields */
+export async function getGoalSummary(walletsList?: WalletInfo[]): Promise<GoalSummary> {
+  const wallets = walletsList || (await getWallets());
+  const goalUsd = wallets.reduce((sum, w) => sum + (Number(w.goalUsdBalance) || 0), 0);
+  const goalKhr = wallets.reduce((sum, w) => sum + (Number(w.goalKhrBalance) || 0), 0);
+  return { goalUsd, goalKhr };
 }
 
 /**

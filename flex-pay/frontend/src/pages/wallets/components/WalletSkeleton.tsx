@@ -37,6 +37,12 @@ export function WalletSkeleton({ rows = 5 }: WalletSkeletonProps) {
             <div className="h-4 w-20 rounded bg-slate-200" />
           </td>
           <td className="px-6 py-4">
+            <div className="h-4 w-16 rounded bg-slate-200" />
+          </td>
+          <td className="px-6 py-4">
+            <div className="h-4 w-20 rounded bg-slate-200" />
+          </td>
+          <td className="px-6 py-4">
             <div className="h-6 w-16 rounded-full bg-slate-200" />
           </td>
           <td className="px-6 py-4">

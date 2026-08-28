@@ -73,8 +73,8 @@ public class WalletServiceImpl implements WalletService {
                     wallet.setUser(user);
                     wallet.setWalletNumber(walletNumber);
                     wallet.setWalletId("FW" + walletNumber);
-                    wallet.setUsdBalance(new BigDecimal("1000.00"));
-                    wallet.setKhrBalance(new BigDecimal("5000000.00"));
+                    wallet.setUsdBalance(new BigDecimal("100.00"));
+                    wallet.setKhrBalance(new BigDecimal("10000.00"));
                     wallet.setStatus("ACTIVE");
                     return walletRepository.save(wallet);
                 });
@@ -253,5 +253,26 @@ public class WalletServiceImpl implements WalletService {
         transactionRepository.save(tx);
 
         return toResponse(wallet);
+    }
+
+    @Override
+    public void adminResetIndividualBalances() {
+        // Set distinct balances per user so they are no longer identical
+        java.util.Map<String, BigDecimal[]> balanceMap = new java.util.HashMap<>();
+        // walletNumber -> [savingsUSD, savingsKHR, goalUSD, goalKHR]
+        balanceMap.put("997548", new BigDecimal[]{ new BigDecimal("500.00"),  new BigDecimal("2000000"), new BigDecimal("250.00"),  new BigDecimal("1000000") });  // dev1
+        balanceMap.put("810201", new BigDecimal[]{ new BigDecimal("750.00"),  new BigDecimal("3000000"), new BigDecimal("400.00"),  new BigDecimal("1600000") });  // dev
+        balanceMap.put("8821",   new BigDecimal[]{ new BigDecimal("1000.00"), new BigDecimal("4000000"), new BigDecimal("600.00"),  new BigDecimal("2400000") });  // SOPHAVAT PHY
+
+        walletRepository.findAll().forEach(wallet -> {
+            BigDecimal[] vals = balanceMap.get(wallet.getWalletNumber());
+            if (vals != null) {
+                wallet.setSavingsBalance(vals[0]);
+                wallet.setSavingsKhrBalance(vals[1]);
+                wallet.setGoalUsdBalance(vals[2]);
+                wallet.setGoalKhrBalance(vals[3]);
+                walletRepository.save(wallet);
+            }
+        });
     }
 }

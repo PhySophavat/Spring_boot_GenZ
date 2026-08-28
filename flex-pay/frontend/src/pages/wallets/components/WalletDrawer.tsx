@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Wallet, ShieldCheck, ShieldAlert, Phone, User, Calendar, DollarSign, Building } from "lucide-react";
+import { X, Wallet, ShieldCheck, ShieldAlert, Phone, Calendar, DollarSign, Building, Target } from "lucide-react";
 import type { WalletInfo } from "../../../types/wallet";
 import { formatUsd, formatKhr, formatDate } from "../../../services/walletService";
 
@@ -13,7 +13,9 @@ export function WalletDrawer({ wallet, isOpen, onClose }: WalletDrawerProps) {
   if (!isOpen || !wallet) return null;
 
   const savingUsd = wallet.savingsBalance ?? (wallet.usdBalance > 0 ? 120.0 : 0.0);
-  const savingKhr = wallet.khrBalance > 0 ? 500000.0 : 0.0;
+  const savingKhr = wallet.savingsKhrBalance ?? (wallet.khrBalance > 0 ? 500000.0 : 0.0);
+  const goalUsd = wallet.goalUsdBalance ?? 250.0;
+  const goalKhr = wallet.goalKhrBalance ?? 1000000.0;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -154,6 +156,27 @@ export function WalletDrawer({ wallet, isOpen, onClose }: WalletDrawerProps) {
                     <p className="text-[11px] font-semibold text-amber-700">KHR Saving</p>
                     <p className="mt-1 font-['Manrope',sans-serif] text-lg font-bold text-amber-900">
                       {formatKhr(savingKhr)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Goal Wallet Balances */}
+              <div className="space-y-2">
+                <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <Target className="h-3.5 w-3.5 text-teal-600" /> Goal Wallet
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-teal-100 bg-teal-50/40 p-3.5">
+                    <p className="text-[11px] font-semibold text-teal-700">USD Goal</p>
+                    <p className="mt-1 font-['Manrope',sans-serif] text-lg font-bold text-teal-900">
+                      {formatUsd(goalUsd)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-teal-100 bg-teal-50/40 p-3.5">
+                    <p className="text-[11px] font-semibold text-teal-700">KHR Goal</p>
+                    <p className="mt-1 font-['Manrope',sans-serif] text-lg font-bold text-teal-900">
+                      {formatKhr(goalKhr)}
                     </p>
                   </div>
                 </div>

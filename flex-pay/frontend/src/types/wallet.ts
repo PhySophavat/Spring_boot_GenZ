@@ -6,8 +6,11 @@ export interface WalletInfo {
   fullName: string;
   phoneNumber?: string;
   usdBalance: number;
-  savingsBalance?: number;
   khrBalance: number;
+  savingsBalance?: number;
+  savingsKhrBalance?: number;
+  goalUsdBalance?: number;
+  goalKhrBalance?: number;
   status: string;
   hasPin: boolean;
   createdAt?: string;
@@ -22,6 +25,11 @@ export interface WalletSummary {
 export interface SavingSummary {
   savingUsd: number;
   savingKhr: number;
+}
+
+export interface GoalSummary {
+  goalUsd: number;
+  goalKhr: number;
 }
 
 export interface NotificationSummary {

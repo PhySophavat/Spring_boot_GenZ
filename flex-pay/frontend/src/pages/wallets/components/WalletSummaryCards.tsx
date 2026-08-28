@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Wallet, PiggyBank, Bell, Loader2, Activity } from "lucide-react";
-import type { WalletSummary, SavingSummary, NotificationSummary } from "../../../types/wallet";
+import { Wallet, PiggyBank, Target, Bell, Loader2, Activity } from "lucide-react";
+import type { WalletSummary, SavingSummary, GoalSummary, NotificationSummary } from "../../../types/wallet";
 import { formatUsd, formatKhr } from "../../../services/walletService";
 
 interface MainWalletCardProps {
@@ -129,6 +129,65 @@ export function SavingWalletCard({ summary, loading }: SavingWalletCardProps) {
   );
 }
 
+interface GoalWalletCardProps {
+  summary: GoalSummary;
+  loading?: boolean;
+}
+
+export function GoalWalletCard({ summary, loading }: GoalWalletCardProps) {
+  const [isSimulating, setIsSimulating] = useState(false);
+  const handleClick = () => {
+    if (isSimulating) return;
+    setIsSimulating(true);
+    setTimeout(() => setIsSimulating(false), 1500);
+  };
+  const showLoading = loading || isSimulating;
+
+  return (
+    <div
+      onClick={handleClick}
+      className="group relative overflow-hidden rounded-[24px] border border-emerald-200/60 bg-gradient-to-br from-emerald-700 via-teal-800 to-emerald-950 p-6 text-white shadow-xl shadow-emerald-950/10 transition-all hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
+    >
+      <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-emerald-400/20 blur-2xl pointer-events-none transition-transform group-hover:scale-125" />
+
+      {showLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-emerald-900/40 backdrop-blur-sm">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-200" />
+        </div>
+      )}
+
+      <div className="relative flex items-center justify-between z-0">
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-200/70">
+            Goal Reserve
+          </span>
+          <h3 className="mt-1 font-['Manrope',sans-serif] text-xl font-extrabold text-white">
+            Goal Wallet
+          </h3>
+        </div>
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-emerald-200 group-hover:bg-white/20 transition-colors">
+          <Target className="h-6 w-6" />
+        </div>
+      </div>
+
+      <div className="relative mt-6 grid grid-cols-2 gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur-md border border-white/10 z-0">
+        <div>
+          <p className="text-xs font-medium text-emerald-200/80">Goal USD</p>
+          <p className="mt-1 font-['Manrope',sans-serif] text-xl font-bold tracking-tight text-white">
+            {showLoading ? "..." : formatUsd(summary.goalUsd)}
+          </p>
+        </div>
+        <div className="border-l border-white/10 pl-4">
+          <p className="text-xs font-medium text-emerald-200/80">Goal KHR</p>
+          <p className="mt-1 font-['Manrope',sans-serif] text-xl font-bold tracking-tight text-emerald-200">
+            {showLoading ? "..." : formatKhr(summary.goalKhr)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface NotificationCardProps {
   summary: NotificationSummary;
   loading?: boolean;
@@ -206,6 +265,7 @@ export function NotificationCard({ summary, loading }: NotificationCardProps) {
 interface WalletSummaryCardsProps {
   walletSummary: WalletSummary;
   savingSummary: SavingSummary;
+  goalSummary: GoalSummary;
   notificationSummary: NotificationSummary;
   loading?: boolean;
 }
@@ -213,14 +273,20 @@ interface WalletSummaryCardsProps {
 export function WalletSummaryCards({
   walletSummary,
   savingSummary,
+  goalSummary,
   notificationSummary,
   loading,
 }: WalletSummaryCardsProps) {
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-      <MainWalletCard summary={walletSummary} loading={loading} />
-      <SavingWalletCard summary={savingSummary} loading={loading} />
-      <NotificationCard summary={notificationSummary} loading={loading} />
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <MainWalletCard summary={walletSummary} loading={loading} />
+        <SavingWalletCard summary={savingSummary} loading={loading} />
+        <GoalWalletCard summary={goalSummary} loading={loading} />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <NotificationCard summary={notificationSummary} loading={loading} />
+      </div>
     </div>
   );
 }
