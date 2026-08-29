@@ -195,10 +195,26 @@ public class PaymentServiceImpl implements PaymentService {
         Wallet receiverWallet = null;
 
         if (request.getReceiverToken() != null && !request.getReceiverToken().isBlank()) {
-            UserPublicToken receiverToken = tokenRepository.findByPublicTokenAndActiveTrue(request.getReceiverToken())
+            String token = request.getReceiverToken().trim();
+            UserPublicToken receiverToken = tokenRepository.findByPublicTokenAndActiveTrue(token)
                 .orElse(null);
             if (receiverToken != null) {
                 receiver = receiverToken.getUser();
+            } else {
+                // Parse structured token formats like FLEXPAY_USER_DEV_ID_FP-810201 or FLEXPAY_CONTACT_dev
+                if (token.contains("_ID_")) {
+                    String idPart = token.substring(token.lastIndexOf("_ID_") + 4).replaceAll("(?i)^fp[-_\\s]*", "").trim();
+                    receiverWallet = walletRepository.findByWalletNumber(idPart).orElse(null);
+                    if (receiverWallet != null) {
+                        receiver = receiverWallet.getUser();
+                    }
+                } else if (token.startsWith("FLEXPAY_CONTACT_")) {
+                    String name = token.replaceFirst("FLEXPAY_CONTACT_", "").replaceAll("_", " ").trim();
+                    receiver = userRepository.findAll().stream()
+                        .filter(u -> u.getFullName() != null && u.getFullName().equalsIgnoreCase(name))
+                        .findFirst()
+                        .orElse(null);
+                }
             }
         }
 
@@ -206,19 +222,28 @@ public class PaymentServiceImpl implements PaymentService {
             receiver = userRepository.findById(request.getReceiverId()).orElse(null);
         }
 
-        if (receiver == null && request.getReceiverWalletNumber() != null) {
-            receiverWallet = walletRepository.findByWalletNumber(request.getReceiverWalletNumber()).orElse(null);
+        if (receiver == null && request.getReceiverWalletNumber() != null && !request.getReceiverWalletNumber().trim().isEmpty()) {
+            String rawWNo = request.getReceiverWalletNumber().trim();
+            String cleanWNo = rawWNo.replaceAll("(?i)^fp[-_\\s]*", "").trim();
+            receiverWallet = walletRepository.findByWalletNumber(cleanWNo).orElse(null);
+            if (receiverWallet == null) {
+                receiverWallet = walletRepository.findByWalletNumber(rawWNo).orElse(null);
+            }
+            if (receiverWallet == null) {
+                receiverWallet = walletRepository.findByWalletNumber("FW" + cleanWNo).orElse(null);
+            }
             if (receiverWallet != null) {
                 receiver = receiverWallet.getUser();
             }
         }
 
         if (receiver == null && request.getReceiverName() != null && !request.getReceiverName().trim().isEmpty()) {
-            final String reqName = request.getReceiverName().trim();
+            final String reqName = request.getReceiverName().trim().toLowerCase();
             receiver = userRepository.findAll().stream()
-                .filter(u -> (u.getFullName() != null && u.getFullName().equalsIgnoreCase(reqName)) ||
-                             (u.getPhoneNumber() != null && u.getPhoneNumber().equalsIgnoreCase(reqName)) ||
-                             (u.getEmail() != null && u.getEmail().equalsIgnoreCase(reqName)))
+                .filter(u -> (u.getFullName() != null && u.getFullName().trim().equalsIgnoreCase(reqName)) ||
+                             (u.getPhoneNumber() != null && u.getPhoneNumber().trim().equalsIgnoreCase(reqName)) ||
+                             (u.getEmail() != null && u.getEmail().trim().equalsIgnoreCase(reqName)) ||
+                             (u.getFullName() != null && u.getFullName().trim().toLowerCase().contains(reqName)))
                 .findFirst()
                 .orElse(null);
         }

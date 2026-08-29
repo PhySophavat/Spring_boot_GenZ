@@ -22,10 +22,16 @@ public class MobileWalletApiController {
 
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final com.ewallet.notification.repository.NotificationRepository notificationRepository;
 
-    public MobileWalletApiController(WalletRepository walletRepository, TransactionRepository transactionRepository) {
+    public MobileWalletApiController(
+            WalletRepository walletRepository,
+            TransactionRepository transactionRepository,
+            com.ewallet.notification.repository.NotificationRepository notificationRepository
+    ) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     @GetMapping("/wallet/main")
@@ -82,12 +88,68 @@ public class MobileWalletApiController {
     }
 
     @GetMapping("/notifications")
-    @Operation(summary = "Get mobile notifications count")
-    public ResponseEntity<Map<String, Object>> getNotifications() {
+    @Operation(summary = "Get mobile notifications count and latest message")
+    public ResponseEntity<Map<String, Object>> getNotifications(
+            Authentication authentication,
+            @RequestParam(required = false) Long userId
+    ) {
+        Long currentUserId = resolveUserId(authentication, userId);
+        long unreadCount = notificationRepository.countByUserIdAndIsReadFalse(currentUserId);
+        List<com.ewallet.notification.entity.Notification> notifs = notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUserId);
+
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("unreadCount", 5);
-        response.put("latestMessage", "You have 5 unread notifications");
+        response.put("unreadCount", unreadCount);
+        response.put("latestMessage", notifs.isEmpty() ? "No notifications" : notifs.get(0).getMessage());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/notifications/all")
+    @Operation(summary = "Get all mobile notifications")
+    public ResponseEntity<List<Map<String, Object>>> getAllNotifications(
+            Authentication authentication,
+            @RequestParam(required = false) Long userId
+    ) {
+        Long currentUserId = resolveUserId(authentication, userId);
+        List<com.ewallet.notification.entity.Notification> list = notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUserId);
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (com.ewallet.notification.entity.Notification n : list) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", n.getId());
+            item.put("title", n.getTitle());
+            item.put("message", n.getMessage());
+            item.put("type", n.getType() != null ? n.getType() : "GENERAL");
+            item.put("referenceId", n.getReferenceId());
+            item.put("isRead", n.getIsRead());
+            item.put("createdAt", n.getCreatedAt());
+            result.add(item);
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/notifications/{id}/read")
+    @Operation(summary = "Mark notification as read")
+    public ResponseEntity<Map<String, String>> markNotificationAsRead(@PathVariable Long id) {
+        notificationRepository.findById(id).ifPresent(n -> {
+            n.setIsRead(true);
+            notificationRepository.save(n);
+        });
+        return ResponseEntity.ok(Map.of("message", "Notification marked as read"));
+    }
+
+    @PutMapping("/notifications/read-all")
+    @Operation(summary = "Mark all notifications as read")
+    public ResponseEntity<Map<String, String>> markAllNotificationsAsRead(
+            Authentication authentication,
+            @RequestParam(required = false) Long userId
+    ) {
+        Long currentUserId = resolveUserId(authentication, userId);
+        List<com.ewallet.notification.entity.Notification> list = notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUserId);
+        for (com.ewallet.notification.entity.Notification n : list) {
+            n.setIsRead(true);
+        }
+        notificationRepository.saveAll(list);
+        return ResponseEntity.ok(Map.of("message", "All notifications marked as read"));
     }
 
     @GetMapping("/transactions/recent")
@@ -149,8 +211,15 @@ public class MobileWalletApiController {
     }
 
     private Long getUserId(Authentication authentication) {
+        return resolveUserId(authentication, null);
+    }
+
+    private Long resolveUserId(Authentication authentication, Long fallbackUserId) {
         if (authentication != null && authentication.getPrincipal() instanceof com.ewallet.user.entity.User u) {
             return u.getId();
+        }
+        if (fallbackUserId != null) {
+            return fallbackUserId;
         }
         return 1L;
     }

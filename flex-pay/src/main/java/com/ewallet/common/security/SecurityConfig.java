@@ -59,6 +59,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/mobile/**").permitAll()
                 .requestMatchers("/api/wallets/me/deposit").permitAll()
                 .requestMatchers("/api/transactions/transfer").permitAll()
+                .requestMatchers("/api/split-bills/**").permitAll()
                 .requestMatchers("/api/qr/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/admin/dashboard/**").permitAll()
