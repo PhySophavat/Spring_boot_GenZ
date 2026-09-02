@@ -64,8 +64,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/admin/dashboard/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/wallets/admin/reset-balances").permitAll()
-                // Chat REST API — admin only
-                .requestMatchers("/api/admin/chat/**").hasRole("ADMIN")
+                // Chat REST API & Chat Payments
+                .requestMatchers("/api/admin/chat/**", "/api/chat/**").authenticated()
                 // All other endpoints require authentication
                 .anyRequest().authenticated()
             )

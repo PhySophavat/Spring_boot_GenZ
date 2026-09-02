@@ -8,10 +8,10 @@
  * │              ├───────────────────────────────────┤
  * │              │  MessageList                       │
  * │              ├───────────────────────────────────┤
- * │              │  MessageInput                      │
+ * │              │  MessageInput (with 💸 Payment)    │
  * └──────────────┴───────────────────────────────────┘
  */
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useChat } from "../../hooks/useChat";
 import { getSession } from "../../services/authService";
 import ChatSidebar from "../../components/chat/ChatSidebar";
@@ -19,19 +19,48 @@ import ChatHeader from "../../components/chat/ChatHeader";
 import MessageList from "../../components/chat/MessageList";
 import MessageInput from "../../components/chat/MessageInput";
 import UserSearch from "../../components/chat/UserSearch";
+import PaymentModal from "../../components/chat/PaymentModal";
 import type { MemberInfo } from "../../services/chatApi";
+import { sendChatPayment } from "../../services/chatApi";
+import { getWallets } from "../../services/walletService";
 import { MessageSquare } from "lucide-react";
 
 export default function AdminChat() {
   const session = getSession();
   const [showUserSearch, setShowUserSearch] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [messageSearch, setMessageSearch] = useState("");
+  const [currentUserId, setCurrentUserId] = useState<number>(1);
+  const [mainWalletBalance, setMainWalletBalance] = useState<number>(100.0);
 
   const chat = useChat();
 
-  // Derive currentUserId from session (mock uses name; real JWT would have ID)
-  // For now we compare by role as a fallback — in production use the JWT sub ID
-  const currentUserId: number = 0; // Overridden once we have real auth user ID
+  const refreshWalletBalance = useCallback(async (userIdToLook?: number) => {
+    try {
+      const wallets = await getWallets();
+      const targetId = userIdToLook ?? currentUserId;
+      const myWallet = wallets.find((w) => w.userId === targetId) || wallets[0];
+      if (myWallet) {
+        setMainWalletBalance(Number(myWallet.usdBalance) || 0);
+        if (myWallet.userId) {
+          setCurrentUserId(myWallet.userId);
+        }
+      }
+    } catch (err) {
+      console.warn("Could not load wallet balance:", err);
+    }
+  }, [currentUserId]);
+
+  useEffect(() => {
+    // If session has user ID, initialize with it
+    const sessionUserId = (session?.user as unknown as { id?: number })?.id;
+    if (sessionUserId) {
+      setCurrentUserId(sessionUserId);
+      refreshWalletBalance(sessionUserId);
+    } else {
+      refreshWalletBalance();
+    }
+  }, []);
 
   const typingNames = chat.typingUsers.map((u) => u.fullName);
 
@@ -45,6 +74,36 @@ export default function AdminChat() {
         m.content?.toLowerCase().includes(messageSearch.toLowerCase())
       )
     : chat.messages;
+
+  // Determine receiver (other member in the active conversation)
+  const otherMember = chat.selectedConversation
+    ? chat.selectedConversation.members.find((m) => m.id !== currentUserId) ??
+      chat.selectedConversation.members[0]
+    : null;
+
+  const handleExecutePayment = async (payload: {
+    receiverId: number;
+    amount: number;
+    message?: string;
+  }) => {
+    if (!chat.selectedConversation) return;
+
+    const res = await sendChatPayment({
+      conversationId: chat.selectedConversation.id,
+      receiverId: payload.receiverId,
+      amount: payload.amount,
+      message: payload.message,
+    });
+
+    if (res && res.newSenderBalance !== undefined) {
+      setMainWalletBalance(Number(res.newSenderBalance));
+    } else {
+      refreshWalletBalance();
+    }
+
+    // Refresh conversation list to update last message preview
+    chat.loadConversations();
+  };
 
   return (
     <div className="flex h-full bg-gray-50 dark:bg-gray-950 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -90,7 +149,7 @@ export default function AdminChat() {
               </div>
             )}
 
-            {/* Input */}
+            {/* Input with 💸 Payment action */}
             <MessageInput
               disabled={!chat.selectedConversation}
               replyToMessage={chat.replyToMessage}
@@ -107,6 +166,7 @@ export default function AdminChat() {
               onCancelEdit={() => chat.setEditing(null)}
               onSubmitEdit={chat.submitEdit}
               onTyping={chat.sendTypingStart}
+              onOpenPayment={() => setShowPaymentModal(true)}
             />
           </>
         ) : (
@@ -133,6 +193,17 @@ export default function AdminChat() {
         <UserSearch
           onSelect={handleStartConversation}
           onClose={() => setShowUserSearch(false)}
+        />
+      )}
+
+      {/* Instant Social Payment Modal */}
+      {showPaymentModal && otherMember && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          receiver={otherMember}
+          mainWalletBalance={mainWalletBalance}
+          onExecutePayment={handleExecutePayment}
         />
       )}
     </div>

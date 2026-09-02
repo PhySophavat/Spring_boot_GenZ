@@ -32,6 +32,7 @@ public class MessageResponse {
     private LocalDateTime updatedAt;
     private List<AttachmentInfo> attachments;
     private List<Long> readByUserIds;
+    private PaymentInfo paymentInfo;
 
     @Data
     @Builder
@@ -54,5 +55,22 @@ public class MessageResponse {
         private String fileUrl;
         private String fileType;
         private Long fileSize;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PaymentInfo {
+        private Long paymentId;
+        private java.math.BigDecimal amount;
+        private String status;
+        private String message;
+        private Long senderId;
+        private String senderName;
+        private Long receiverId;
+        private String receiverName;
+        private String transactionReference;
+        private LocalDateTime completedAt;
     }
 }

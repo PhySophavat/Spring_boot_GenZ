@@ -22,6 +22,10 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
     @Query("SELECT w FROM Wallet w WHERE w.walletNumber = :walletNumber")
     Optional<Wallet> findByWalletNumberWithLock(@Param("walletNumber") String walletNumber);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT w FROM Wallet w WHERE w.user.id = :userId")
+    Optional<Wallet> findByUserIdWithLock(@Param("userId") Long userId);
+
     @Query("SELECT COALESCE(SUM(w.usdBalance), 0) FROM Wallet w")
     java.math.BigDecimal sumTotalUsdBalance();
 

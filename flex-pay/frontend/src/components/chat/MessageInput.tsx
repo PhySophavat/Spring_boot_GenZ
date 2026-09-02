@@ -33,6 +33,7 @@ interface Props {
   onCancelEdit: () => void;
   onSubmitEdit: (content: string) => void;
   onTyping: () => void;
+  onOpenPayment?: () => void;
 }
 
 const EMOJI_SHORTCUTS: Record<string, string> = {
@@ -50,6 +51,7 @@ export default function MessageInput({
   onCancelEdit,
   onSubmitEdit,
   onTyping,
+  onOpenPayment,
 }: Props) {
   const [text, setText] = useState(editingMessage?.content ?? "");
   const [isUploading, setIsUploading] = useState(false);
@@ -166,6 +168,19 @@ export default function MessageInput({
           accept=".jpg,.jpeg,.png,.webp,.pdf,.docx"
           onChange={handleFileChange}
         />
+
+        {/* 💸 Payment */}
+        {onOpenPayment && (
+          <button
+            type="button"
+            title="Send Instant Payment 💸"
+            onClick={onOpenPayment}
+            disabled={disabled || isUploading}
+            className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl text-base hover:bg-violet-100 dark:hover:bg-violet-900/40 text-violet-600 dark:text-violet-400 transition hover:scale-105 active:scale-95 disabled:opacity-50"
+          >
+            💸
+          </button>
+        )}
 
         {/* Text area */}
         <div className="flex-1 relative">

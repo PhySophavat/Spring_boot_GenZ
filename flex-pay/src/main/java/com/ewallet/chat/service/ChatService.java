@@ -440,6 +440,27 @@ public class ChatService {
                 .build());
         }
 
+        if ("PAYMENT".equals(msg.getMessageType()) && msg.getContent() != null) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(msg.getContent());
+                MessageResponse.PaymentInfo paymentInfo = MessageResponse.PaymentInfo.builder()
+                    .paymentId(node.has("paymentId") ? node.get("paymentId").asLong() : null)
+                    .amount(node.has("amount") ? new java.math.BigDecimal(node.get("amount").asText()) : null)
+                    .status(node.has("status") ? node.get("status").asText() : "COMPLETED")
+                    .message(node.has("message") ? node.get("message").asText() : "")
+                    .senderId(node.has("senderId") ? node.get("senderId").asLong() : null)
+                    .senderName(node.has("senderName") ? node.get("senderName").asText() : null)
+                    .receiverId(node.has("receiverId") ? node.get("receiverId").asLong() : null)
+                    .receiverName(node.has("receiverName") ? node.get("receiverName").asText() : null)
+                    .transactionReference(node.has("transactionReference") ? node.get("transactionReference").asText() : null)
+                    .build();
+                builder.paymentInfo(paymentInfo);
+            } catch (Exception e) {
+                log.warn("Could not parse payment info from message {}: {}", msg.getId(), e.getMessage());
+            }
+        }
+
         return builder.build();
     }
 

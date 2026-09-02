@@ -37,12 +37,46 @@ export interface SenderInfo {
   role: string;
 }
 
+export interface PaymentInfo {
+  paymentId?: number;
+  amount?: number;
+  status?: string;
+  message?: string;
+  senderId?: number;
+  senderName?: string;
+  receiverId?: number;
+  receiverName?: string;
+  transactionReference?: string;
+  completedAt?: string;
+}
+
+export interface ChatPaymentRequest {
+  conversationId: number;
+  receiverId: number;
+  amount: number;
+  message?: string;
+}
+
+export interface ChatPaymentResponse {
+  paymentId: number;
+  amount: number;
+  status: string;
+  senderId: number;
+  senderName: string;
+  receiverId: number;
+  receiverName: string;
+  transactionReference: string;
+  message?: string;
+  newSenderBalance: number;
+  completedAt: string;
+}
+
 export interface MessageData {
   id: number;
   conversationId: number;
   sender: SenderInfo;
   content: string | null;
-  messageType: "TEXT" | "IMAGE" | "FILE";
+  messageType: "TEXT" | "IMAGE" | "FILE" | "PAYMENT";
   replyToMessageId?: number;
   replyToMessage?: Partial<MessageData>;
   isEdited: boolean;
@@ -51,6 +85,7 @@ export interface MessageData {
   updatedAt: string;
   attachments: AttachmentInfo[];
   readByUserIds: number[];
+  paymentInfo?: PaymentInfo;
 }
 
 export interface MemberInfo {
@@ -194,5 +229,17 @@ export async function uploadFile(file: File): Promise<{
   }>>("/api/admin/chat/upload", form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return data.data;
+}
+
+// ── Instant Chat Payment ──────────────────────────────────────────────
+
+export async function sendChatPayment(
+  payload: ChatPaymentRequest
+): Promise<ChatPaymentResponse> {
+  const { data } = await chatAxios.post<ApiResponse<ChatPaymentResponse>>(
+    "/api/chat/payments",
+    payload
+  );
   return data.data;
 }
