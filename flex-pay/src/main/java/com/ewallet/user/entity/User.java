@@ -46,6 +46,9 @@ public class User {
     @Column(name = "account_status", nullable = false, length = 20)
     private String accountStatus = "ACTIVE";
 
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = true;
+
     /** Role used for authorization: USER | ADMIN | SUPER_ADMIN */
     @Column(name = "role", nullable = false, length = 20)
     private String role = "USER";
@@ -181,6 +184,14 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public Boolean getEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 
     public String getProfileImage() {

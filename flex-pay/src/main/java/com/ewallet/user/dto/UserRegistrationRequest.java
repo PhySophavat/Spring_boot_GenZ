@@ -9,7 +9,6 @@ public record UserRegistrationRequest(
     @Size(max = 100, message = "Full name must be 100 characters or fewer")
     String fullName,
 
-    @NotBlank(message = "Phone number is required")
     @Size(max = 20, message = "Phone number must be 20 characters or fewer")
     String phoneNumber,
 

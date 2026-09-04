@@ -132,7 +132,7 @@ public class EmailService {
                         <p>Hello,</p>
                         <p>You requested a One-Time Password (OTP) for your FlexPay account verification. Please enter the code below to proceed:</p>
                         <div class="otp-box">
-                            <div class="otp-code">%s</div>
+                            <div class="otp-code">{{OTP_CODE}}</div>
                             <div class="expiry-badge">Valid for 10 minutes</div>
                         </div>
                         <div class="warning">
@@ -147,7 +147,7 @@ public class EmailService {
             </html>
             """;
 
-        String htmlContent = String.format(htmlTemplate, otp);
+        String htmlContent = htmlTemplate.replace("{{OTP_CODE}}", otp);
         helper.setText(htmlContent, true);
         mailSender.send(message);
         log.info("OTP email successfully sent to {}", email);

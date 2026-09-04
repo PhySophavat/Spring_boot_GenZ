@@ -37,12 +37,24 @@ public class SecurityConfig {
             .exceptionHandling(exception ->
                 exception.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
-                // Auth endpoints
+                // Authenticated Auth endpoints
+                .requestMatchers(
+                    "/api/auth/create-pin",
+                    "/api/auth/verify-pin",
+                    "/api/auth/change-pin"
+                ).authenticated()
+                // Public Auth endpoints
                 .requestMatchers(
                     "/api/auth/register",
+                    "/api/auth/verify-email",
+                    "/api/auth/resend-email-otp",
                     "/api/auth/login",
                     "/api/auth/forgot-password",
+                    "/api/auth/verify-reset-otp",
                     "/api/auth/reset-password",
+                    "/api/auth/forgot-pin",
+                    "/api/auth/verify-pin-reset-otp",
+                    "/api/auth/reset-pin",
                     "/api/auth/send-otp",
                     "/api/auth/verify-otp"
                 ).permitAll()

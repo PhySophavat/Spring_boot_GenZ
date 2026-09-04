@@ -120,6 +120,9 @@ public class UserServiceImpl implements UserService {
     }
 
     private String normalizePhone(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return "0" + String.format("%09d", Math.abs(System.currentTimeMillis() % 1000000000L));
+        }
         return phone.trim();
     }
 

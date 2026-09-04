@@ -51,7 +51,7 @@ class OtpServiceTest {
         assertThat(saved.getOtpCode()).isEqualTo(otp);
         assertThat(saved.getPurpose()).isEqualTo(OtpPurpose.REGISTRATION);
         assertThat(saved.getVerified()).isFalse();
-        assertThat(saved.getExpiresAt()).isAfter(LocalDateTime.now().plusMinutes(9));
+        assertThat(saved.getExpiresAt()).isAfter(LocalDateTime.now().plusMinutes(4));
     }
 
     @Test

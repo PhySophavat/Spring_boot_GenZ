@@ -22,5 +22,14 @@ public interface OtpVerificationRepository extends JpaRepository<OtpVerification
         OtpPurpose purpose
     );
 
+    Optional<OtpVerification> findTopByEmailIgnoreCaseAndResetTokenOrderByCreatedAtDesc(
+        String email,
+        String resetToken
+    );
+
+    Optional<OtpVerification> findTopByResetTokenOrderByCreatedAtDesc(
+        String resetToken
+    );
+
     void deleteByExpiresAtBefore(LocalDateTime time);
 }
