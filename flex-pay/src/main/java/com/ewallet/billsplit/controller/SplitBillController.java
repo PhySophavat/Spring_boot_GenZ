@@ -90,17 +90,35 @@ public class SplitBillController {
         return ResponseEntity.ok(Map.of("message", "Reminders sent successfully"));
     }
 
+    /**
+     * Resolves the current user ID from JWT authentication or fallback userId param.
+     * Throws 401 if no identity can be determined (prevents unauthenticated access as user #1).
+     */
     private Long resolveUserId(Authentication authentication, Long fallbackUserId) {
+        // 1. JWT token principal (most secure)
         if (authentication != null && authentication.getPrincipal() instanceof User u) {
             return u.getId();
         }
+        // 2. Look up by phone/email from JWT subject
         if (authentication != null && authentication.getName() != null) {
-            User u = userRepository.findByPhoneNumber(authentication.getName()).orElse(null);
+            String name = authentication.getName();
+            User u = userRepository.findByPhoneNumber(name)
+                    .or(() -> userRepository.findByEmailIgnoreCase(name))
+                    .orElse(null);
             if (u != null) return u.getId();
+            // Try numeric user ID in token subject
+            try {
+                return Long.parseLong(name);
+            } catch (NumberFormatException ignored) {}
         }
+        // 3. Explicit userId query param (for testing/dev; validated that user exists)
         if (fallbackUserId != null) {
+            if (!userRepository.existsById(fallbackUserId)) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + fallbackUserId);
+            }
             return fallbackUserId;
         }
-        return 1L;
+        // 4. No identity — reject
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
     }
 }

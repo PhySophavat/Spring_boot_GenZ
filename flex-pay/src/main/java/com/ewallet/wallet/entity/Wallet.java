@@ -25,23 +25,19 @@ public class Wallet {
     @Column(name = "wallet_number", nullable = false, unique = true, length = 6)
     private String walletNumber;
 
+    // --- Main Wallet Balances (USD & KHR) ---
     @Column(name = "usd_balance", nullable = false, precision = 19, scale = 2)
     private BigDecimal usdBalance = BigDecimal.ZERO;
-
-    @Column(name = "savings_balance", nullable = false, precision = 19, scale = 2)
-    private BigDecimal savingsBalance = new BigDecimal("48778.50");
 
     @Column(name = "khr_balance", nullable = false, precision = 19, scale = 2)
     private BigDecimal khrBalance = BigDecimal.ZERO;
 
+    // --- Savings Wallet Balances (USD & KHR) ---
+    @Column(name = "savings_balance", nullable = false, precision = 19, scale = 2)
+    private BigDecimal savingsBalance = BigDecimal.ZERO;
+
     @Column(name = "savings_khr_balance", precision = 19, scale = 2)
-    private BigDecimal savingsKhrBalance = new BigDecimal("500000.00");
-
-    @Column(name = "goal_usd_balance", precision = 19, scale = 2)
-    private BigDecimal goalUsdBalance = new BigDecimal("250.00");
-
-    @Column(name = "goal_khr_balance", precision = 19, scale = 2)
-    private BigDecimal goalKhrBalance = new BigDecimal("1000000.00");
+    private BigDecimal savingsKhrBalance = BigDecimal.ZERO;
 
     @Column(nullable = false, length = 20)
     private String status = "ACTIVE";
@@ -57,6 +53,56 @@ public class Wallet {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    // --- Helper Methods for Currency & Wallet Type Operations ---
+    public BigDecimal getBalance(String currency, String walletType) {
+        boolean isSavings = walletType != null && walletType.toUpperCase().contains("SAV");
+        boolean isKhr = currency != null && currency.equalsIgnoreCase("KHR");
+
+        if (isSavings) {
+            return isKhr ? getSavingsKhrBalance() : getSavingsBalance();
+        } else {
+            return isKhr ? getKhrBalance() : getUsdBalance();
+        }
+    }
+
+    public void deductBalance(String currency, String walletType, BigDecimal amount) {
+        boolean isSavings = walletType != null && walletType.toUpperCase().contains("SAV");
+        boolean isKhr = currency != null && currency.equalsIgnoreCase("KHR");
+
+        if (isSavings) {
+            if (isKhr) {
+                this.savingsKhrBalance = getSavingsKhrBalance().subtract(amount);
+            } else {
+                this.savingsBalance = getSavingsBalance().subtract(amount);
+            }
+        } else {
+            if (isKhr) {
+                this.khrBalance = getKhrBalance().subtract(amount);
+            } else {
+                this.usdBalance = getUsdBalance().subtract(amount);
+            }
+        }
+    }
+
+    public void creditBalance(String currency, String walletType, BigDecimal amount) {
+        boolean isSavings = walletType != null && walletType.toUpperCase().contains("SAV");
+        boolean isKhr = currency != null && currency.equalsIgnoreCase("KHR");
+
+        if (isSavings) {
+            if (isKhr) {
+                this.savingsKhrBalance = getSavingsKhrBalance().add(amount);
+            } else {
+                this.savingsBalance = getSavingsBalance().add(amount);
+            }
+        } else {
+            if (isKhr) {
+                this.khrBalance = getKhrBalance().add(amount);
+            } else {
+                this.usdBalance = getUsdBalance().add(amount);
+            }
+        }
+    }
+
     // --- Getters and Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -70,29 +116,33 @@ public class Wallet {
     public String getWalletNumber() { return walletNumber; }
     public void setWalletNumber(String walletNumber) { this.walletNumber = walletNumber; }
 
-    public BigDecimal getUsdBalance() { return usdBalance; }
-    public void setUsdBalance(BigDecimal usdBalance) { this.usdBalance = usdBalance; }
+    public BigDecimal getUsdBalance() {
+        return usdBalance != null ? usdBalance : BigDecimal.ZERO;
+    }
+    public void setUsdBalance(BigDecimal usdBalance) {
+        this.usdBalance = usdBalance != null ? usdBalance : BigDecimal.ZERO;
+    }
 
-    public BigDecimal getSavingsBalance() { return savingsBalance; }
-    public void setSavingsBalance(BigDecimal savingsBalance) { this.savingsBalance = savingsBalance; }
+    public BigDecimal getKhrBalance() {
+        return khrBalance != null ? khrBalance : BigDecimal.ZERO;
+    }
+    public void setKhrBalance(BigDecimal khrBalance) {
+        this.khrBalance = khrBalance != null ? khrBalance : BigDecimal.ZERO;
+    }
+
+    public BigDecimal getSavingsBalance() {
+        return savingsBalance != null ? savingsBalance : BigDecimal.ZERO;
+    }
+    public void setSavingsBalance(BigDecimal savingsBalance) {
+        this.savingsBalance = savingsBalance != null ? savingsBalance : BigDecimal.ZERO;
+    }
 
     public BigDecimal getSavingsKhrBalance() {
-        return savingsKhrBalance != null ? savingsKhrBalance : new BigDecimal("500000.00");
+        return savingsKhrBalance != null ? savingsKhrBalance : BigDecimal.ZERO;
     }
-    public void setSavingsKhrBalance(BigDecimal savingsKhrBalance) { this.savingsKhrBalance = savingsKhrBalance; }
-
-    public BigDecimal getGoalUsdBalance() {
-        return goalUsdBalance != null ? goalUsdBalance : new BigDecimal("250.00");
+    public void setSavingsKhrBalance(BigDecimal savingsKhrBalance) {
+        this.savingsKhrBalance = savingsKhrBalance != null ? savingsKhrBalance : BigDecimal.ZERO;
     }
-    public void setGoalUsdBalance(BigDecimal goalUsdBalance) { this.goalUsdBalance = goalUsdBalance; }
-
-    public BigDecimal getGoalKhrBalance() {
-        return goalKhrBalance != null ? goalKhrBalance : new BigDecimal("1000000.00");
-    }
-    public void setGoalKhrBalance(BigDecimal goalKhrBalance) { this.goalKhrBalance = goalKhrBalance; }
-
-    public BigDecimal getKhrBalance() { return khrBalance; }
-    public void setKhrBalance(BigDecimal khrBalance) { this.khrBalance = khrBalance; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -105,6 +155,4 @@ public class Wallet {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-    
-    // NO MORE BROKEN getAccountHolderName() METHOD!
 }

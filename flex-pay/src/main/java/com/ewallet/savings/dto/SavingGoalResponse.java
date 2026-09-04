@@ -22,6 +22,7 @@ public class SavingGoalResponse {
     private Double progress;
     private BigDecimal remainingAmount;
     private LocalDate targetDate;
+    private String description;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

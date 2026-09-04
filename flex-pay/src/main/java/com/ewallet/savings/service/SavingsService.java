@@ -24,6 +24,8 @@ public interface SavingsService {
 
     List<SavingTransactionResponse> getGoalTransactions(Long userId, Long goalId);
 
+    List<SavingTransactionResponse> getAllTransactions(Long userId);
+
     SavingStreakResponse getStreak(Long userId);
 
     SavingReminderResponse getReminder(Long userId, Long goalId);

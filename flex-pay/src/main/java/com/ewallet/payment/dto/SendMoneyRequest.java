@@ -15,6 +15,15 @@ public class SendMoneyRequest {
     private BigDecimal amount;
 
     private String note;
+    private String currency = "USD";
+
+    public String getCurrency() {
+        return currency != null ? currency.toUpperCase() : "USD";
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
 
     public String getReceiverWalletNumber() {
         return receiverWalletNumber;

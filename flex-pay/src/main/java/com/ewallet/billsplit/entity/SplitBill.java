@@ -27,6 +27,9 @@ public class SplitBill {
     @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal totalAmount;
 
+    @Column(nullable = false, length = 10)
+    private String currency = "USD";
+
     @Column(name = "split_type", nullable = false, length = 20)
     private String splitType = "EQUAL";
 
@@ -72,6 +75,14 @@ public class SplitBill {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public String getCurrency() {
+        return currency != null ? currency : "USD";
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency != null ? currency.toUpperCase() : "USD";
     }
 
     public String getSplitType() {

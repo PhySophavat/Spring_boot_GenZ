@@ -139,14 +139,16 @@ public class ChatPaymentServiceImpl implements ChatPaymentService {
         receiverWallet = receiverWallet.getId().equals(firstLock.getId()) ? firstLock : secondLock;
 
         // 7. Balance check (Main Wallet)
-        if (senderWallet.getUsdBalance().compareTo(amount) < 0) {
+        String currency = (request.getCurrency() != null && request.getCurrency().equalsIgnoreCase("KHR")) ? "KHR" : "USD";
+        BigDecimal senderBalance = senderWallet.getBalance(currency, "MAIN");
+        if (senderBalance.compareTo(amount) < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Insufficient Balance: Your Main Wallet does not have enough money for this payment.");
+                    "Insufficient Balance: Your Main Wallet does not have enough " + currency + " for this payment.");
         }
 
-        // 8. Deduct sender & credit receiver
-        senderWallet.setUsdBalance(senderWallet.getUsdBalance().subtract(amount));
-        receiverWallet.setUsdBalance(receiverWallet.getUsdBalance().add(amount));
+        // 8. Deduct sender & credit receiver in that exact currency
+        senderWallet.deductBalance(currency, "MAIN", amount);
+        receiverWallet.creditBalance(currency, "MAIN", amount);
         walletRepository.save(senderWallet);
         walletRepository.save(receiverWallet);
 
@@ -164,7 +166,7 @@ public class ChatPaymentServiceImpl implements ChatPaymentService {
         walletTx.setNote(request.getMessage() != null && !request.getMessage().trim().isEmpty()
                 ? request.getMessage().trim() : "Social payment in chat");
         walletTx.setTransactionType("CHAT_PAYMENT");
-        walletTx.setCurrency("USD");
+        walletTx.setCurrency(currency);
         walletTx.setStatus("SUCCESS");
         transactionRepository.save(walletTx);
 

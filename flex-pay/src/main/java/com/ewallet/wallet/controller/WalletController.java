@@ -64,6 +64,48 @@ public class WalletController {
         return ResponseEntity.ok(walletService.deposit(userId, request));
     }
 
+    @GetMapping("/api/wallets/balance")
+    @Operation(summary = "Get single authoritative balance for Main and Savings wallets in USD and KHR")
+    public ResponseEntity<Map<String, Object>> getAuthoritativeBalance(Authentication authentication) {
+        Long userId = getAuthenticatedUserId(authentication);
+        WalletResponse w = walletService.getWallet(userId);
+
+        Map<String, Object> main = Map.of(
+            "usd", w.getUsdBalance(),
+            "khr", w.getKhrBalance()
+        );
+        Map<String, Object> savings = Map.of(
+            "usd", w.getSavingsBalance(),
+            "khr", w.getSavingsKhrBalance()
+        );
+        Map<String, Object> total = Map.of(
+            "usd", w.getUsdBalance().add(w.getSavingsBalance()),
+            "khr", w.getKhrBalance().add(w.getSavingsKhrBalance())
+        );
+
+        Map<String, Object> res = new java.util.LinkedHashMap<>();
+        res.put("walletNumber", w.getWalletNumber());
+        res.put("main", main);
+        res.put("savings", savings);
+        res.put("total", total);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/api/wallets/transfer-savings")
+    @Operation(summary = "Atomic internal transfer between Main Wallet and Savings Wallet")
+    public ResponseEntity<WalletResponse> transferSavings(
+            Authentication authentication,
+            @RequestBody Map<String, Object> payload) {
+        Long userId = getAuthenticatedUserId(authentication);
+        String from = (String) payload.getOrDefault("from", "MAIN");
+        String to = (String) payload.getOrDefault("to", "SAVINGS");
+        String currency = (String) payload.getOrDefault("currency", "USD");
+        Object rawAmt = payload.get("amount");
+        java.math.BigDecimal amount = rawAmt != null ? new java.math.BigDecimal(rawAmt.toString()) : java.math.BigDecimal.ZERO;
+
+        return ResponseEntity.ok(walletService.transferBetweenWallets(userId, from, to, amount, currency));
+    }
+
     @PostMapping("/api/wallets/admin/reset-balances")
     @Operation(summary = "Admin: Reset individual wallet balances by walletNumber")
     public ResponseEntity<Map<String, String>> adminResetBalances() {

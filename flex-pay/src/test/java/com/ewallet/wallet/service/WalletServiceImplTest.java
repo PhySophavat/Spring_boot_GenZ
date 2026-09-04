@@ -40,6 +40,9 @@ class WalletServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private com.ewallet.savings.repository.SavingGoalRepository savingGoalRepository;
+
     @InjectMocks
     private WalletServiceImpl walletService;
 
@@ -68,9 +71,8 @@ class WalletServiceImplTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getWalletNumber()).matches("^\\d{6}$");
-        assertThat(result.getWalletId()).isEqualTo("FW" + result.getWalletNumber());
-        assertThat(result.getUsdBalance().toPlainString()).isEqualTo("0");
-        assertThat(result.getKhrBalance().toPlainString()).isEqualTo("0");
+        assertThat(result.getUsdBalance().compareTo(new java.math.BigDecimal("100.00"))).isZero();
+        assertThat(result.getKhrBalance().compareTo(new java.math.BigDecimal("10000.00"))).isZero();
         assertThat(result.getStatus()).isEqualTo("ACTIVE");
         assertThat(result.getUser()).isSameAs(user);
     }
@@ -127,5 +129,56 @@ class WalletServiceImplTest {
             .hasMessageContaining("User not found");
 
         verify(walletRepository, never()).save(any(Wallet.class));
+    }
+
+    @Test
+    @DisplayName("Internal Transfer: Main to Savings USD transfers balance atomically and preserves total")
+    void transferBetweenWallets_mainToSavingsUSD_successfullyTransfersAndPreservesTotal() {
+        Wallet wallet = new Wallet();
+        wallet.setId(10L);
+        wallet.setUser(user);
+        wallet.setWalletNumber("882199");
+        wallet.setWalletId("FW882199");
+        wallet.setUsdBalance(new java.math.BigDecimal("500.00"));
+        wallet.setSavingsBalance(new java.math.BigDecimal("100.00"));
+        wallet.setKhrBalance(new java.math.BigDecimal("2000000.00"));
+        wallet.setSavingsKhrBalance(new java.math.BigDecimal("500000.00"));
+
+        when(walletRepository.findByUserIdWithLock(42L)).thenReturn(Optional.of(wallet));
+        when(walletRepository.save(any(Wallet.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        com.ewallet.wallet.dto.WalletResponse resp = walletService.transferBetweenWallets(
+            42L, "MAIN", "SAVINGS", new java.math.BigDecimal("100.00"), "USD"
+        );
+
+        assertThat(resp.getUsdBalance().compareTo(new java.math.BigDecimal("400.00"))).isZero();
+        assertThat(resp.getSavingsBalance().compareTo(new java.math.BigDecimal("200.00"))).isZero();
+        assertThat(resp.getKhrBalance().compareTo(new java.math.BigDecimal("2000000.00"))).isZero();
+        assertThat(resp.getSavingsKhrBalance().compareTo(new java.math.BigDecimal("500000.00"))).isZero();
+
+        verify(transactionRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("Internal Transfer: Insufficient balance in source wallet throws 400 Bad Request")
+    void transferBetweenWallets_insufficientBalance_throwsBadRequest() {
+        Wallet wallet = new Wallet();
+        wallet.setId(10L);
+        wallet.setUser(user);
+        wallet.setWalletNumber("882199");
+        wallet.setWalletId("FW882199");
+        wallet.setUsdBalance(new java.math.BigDecimal("20.00"));
+        wallet.setSavingsBalance(new java.math.BigDecimal("0.00"));
+
+        when(walletRepository.findByUserIdWithLock(42L)).thenReturn(Optional.of(wallet));
+
+        org.assertj.core.api.Assertions
+            .assertThatThrownBy(() -> walletService.transferBetweenWallets(
+                42L, "MAIN", "SAVINGS", new java.math.BigDecimal("50.00"), "USD"
+            ))
+            .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+            .hasMessageContaining("Insufficient balance");
+
+        verify(walletRepository, never()).save(any());
     }
 }

@@ -47,6 +47,9 @@ public class SavingGoal {
     @Column(name = "target_date", nullable = false)
     private LocalDate targetDate;
 
+    @Column(length = 500)
+    private String description;
+
     @Column(nullable = false, length = 30)
     @Builder.Default
     private String status = "ACTIVE"; // ACTIVE, COMPLETED, CANCELLED

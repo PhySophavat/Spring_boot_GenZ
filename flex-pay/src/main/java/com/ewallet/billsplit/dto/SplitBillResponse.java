@@ -9,6 +9,7 @@ public record SplitBillResponse(
     Long id,
     Map<String, Object> creator,
     BigDecimal totalAmount,
+    String currency,
     String note,
     String splitType,
     String status,

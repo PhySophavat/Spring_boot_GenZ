@@ -89,17 +89,19 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Receiver wallet is not active");
         }
 
+        String currency = (request.getCurrency() != null && request.getCurrency().equalsIgnoreCase("KHR")) ? "KHR" : "USD";
         BigDecimal amount = request.getAmount();
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be greater than zero");
         }
 
-        if (senderWallet.getUsdBalance().compareTo(amount) < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Main Wallet");
+        BigDecimal senderBalance = senderWallet.getBalance(currency, "MAIN");
+        if (senderBalance.compareTo(amount) < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Main Wallet (" + currency + ")");
         }
 
-        senderWallet.setUsdBalance(senderWallet.getUsdBalance().subtract(amount));
-        receiverWallet.setUsdBalance(receiverWallet.getUsdBalance().add(amount));
+        senderWallet.deductBalance(currency, "MAIN", amount);
+        receiverWallet.creditBalance(currency, "MAIN", amount);
 
         walletRepository.save(senderWallet);
         walletRepository.save(receiverWallet);
@@ -114,16 +116,19 @@ public class PaymentServiceImpl implements PaymentService {
         transaction.setTotalAmount(amount);
         transaction.setNote(request.getNote());
         transaction.setTransactionType("TRANSFER");
-        transaction.setCurrency("USD");
+        transaction.setCurrency(currency);
         transaction.setStatus("SUCCESS");
 
         transactionRepository.save(transaction);
 
+        String symbol = "KHR".equals(currency) ? "៛" : "$";
         createNotification(
             senderWallet.getUser(),
             "Money Sent Successfully",
-            String.format("You have successfully sent $%s USD to %s (Wallet: %s).",
-                amount.setScale(2, BigDecimal.ROUND_HALF_UP),
+            String.format("You have successfully sent %s%s %s to %s (Wallet: %s).",
+                symbol,
+                amount.toPlainString(),
+                currency,
                 receiverWallet.getUser().getFullName(),
                 receiverWallet.getWalletNumber())
         );
@@ -131,16 +136,18 @@ public class PaymentServiceImpl implements PaymentService {
         createNotification(
             receiverWallet.getUser(),
             "Money Received",
-            String.format("You have received $%s USD from %s (Wallet: %s).",
-                amount.setScale(2, BigDecimal.ROUND_HALF_UP),
+            String.format("You have received %s%s %s from %s (Wallet: %s).",
+                symbol,
+                amount.toPlainString(),
+                currency,
                 senderWallet.getUser().getFullName(),
                 senderWallet.getWalletNumber())
         );
 
         return new SendMoneyResponse(
             referenceNumber,
-            senderWallet.getUsdBalance(),
-            receiverWallet.getUsdBalance(),
+            senderWallet.getBalance(currency, "MAIN"),
+            receiverWallet.getBalance(currency, "MAIN"),
             "SUCCESS"
         );
     }
@@ -273,56 +280,20 @@ public class PaymentServiceImpl implements PaymentService {
 
         BigDecimal remainingBalance;
 
-        // Perform balance deduction strictly based on selected wallet type & currency
-        if ("SAVING".equals(walletType)) {
-            if ("USD".equals(currency)) {
-                if (senderWallet.getSavingsBalance().compareTo(amount) < 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Saving Wallet");
-                }
-                senderWallet.setSavingsBalance(senderWallet.getSavingsBalance().subtract(amount));
-                receiverWallet.setUsdBalance(receiverWallet.getUsdBalance().add(amount));
-                remainingBalance = senderWallet.getSavingsBalance();
-            } else {
-                if (senderWallet.getSavingsKhrBalance().compareTo(amount) < 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Saving Wallet");
-                }
-                senderWallet.setSavingsKhrBalance(senderWallet.getSavingsKhrBalance().subtract(amount));
-                receiverWallet.setKhrBalance(receiverWallet.getKhrBalance().add(amount));
-                remainingBalance = senderWallet.getSavingsKhrBalance();
-            }
-        } else if ("GOAL".equals(walletType)) {
-            if ("USD".equals(currency)) {
-                if (senderWallet.getGoalUsdBalance().compareTo(amount) < 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Goal Wallet");
-                }
-                senderWallet.setGoalUsdBalance(senderWallet.getGoalUsdBalance().subtract(amount));
-                receiverWallet.setUsdBalance(receiverWallet.getUsdBalance().add(amount));
-                remainingBalance = senderWallet.getGoalUsdBalance();
-            } else {
-                if (senderWallet.getGoalKhrBalance().compareTo(amount) < 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Goal Wallet");
-                }
-                senderWallet.setGoalKhrBalance(senderWallet.getGoalKhrBalance().subtract(amount));
-                receiverWallet.setKhrBalance(receiverWallet.getKhrBalance().add(amount));
-                remainingBalance = senderWallet.getGoalKhrBalance();
-            }
-        } else { // MAIN
-            if ("USD".equals(currency)) {
-                if (senderWallet.getUsdBalance().compareTo(amount) < 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Main Wallet");
-                }
-                senderWallet.setUsdBalance(senderWallet.getUsdBalance().subtract(amount));
-                receiverWallet.setUsdBalance(receiverWallet.getUsdBalance().add(amount));
-                remainingBalance = senderWallet.getUsdBalance();
-            } else {
-                if (senderWallet.getKhrBalance().compareTo(amount) < 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in Main Wallet");
-                }
-                senderWallet.setKhrBalance(senderWallet.getKhrBalance().subtract(amount));
-                receiverWallet.setKhrBalance(receiverWallet.getKhrBalance().add(amount));
-                remainingBalance = senderWallet.getKhrBalance();
-            }
+        if ("SAVING".equalsIgnoreCase(walletType) || "GOAL".equalsIgnoreCase(walletType)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Payments must be made from Main Wallet. Please transfer from Savings to Main Wallet first.");
         }
+
+        BigDecimal senderBalance = senderWallet.getBalance(currency, "MAIN");
+        if (senderBalance.compareTo(amount) < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Insufficient balance in Main Wallet (" + currency + ")");
+        }
+
+        senderWallet.deductBalance(currency, "MAIN", amount);
+        receiverWallet.creditBalance(currency, "MAIN", amount);
+        remainingBalance = senderWallet.getBalance(currency, "MAIN");
 
         walletRepository.save(senderWallet);
         walletRepository.save(receiverWallet);

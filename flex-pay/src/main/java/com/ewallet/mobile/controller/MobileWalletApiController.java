@@ -23,15 +23,18 @@ public class MobileWalletApiController {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final com.ewallet.notification.repository.NotificationRepository notificationRepository;
+    private final com.ewallet.user.repository.UserRepository userRepository;
 
     public MobileWalletApiController(
             WalletRepository walletRepository,
             TransactionRepository transactionRepository,
-            com.ewallet.notification.repository.NotificationRepository notificationRepository
+            com.ewallet.notification.repository.NotificationRepository notificationRepository,
+            com.ewallet.user.repository.UserRepository userRepository
     ) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/wallet/main")
@@ -42,8 +45,8 @@ public class MobileWalletApiController {
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("walletNumber", wallet != null ? wallet.getWalletNumber() : "653498");
-        response.put("usdBalance", wallet != null ? wallet.getUsdBalance() : new BigDecimal("100.00"));
-        response.put("khrBalance", wallet != null ? wallet.getKhrBalance() : new BigDecimal("10000.00"));
+        response.put("usdBalance", wallet != null ? wallet.getUsdBalance() : BigDecimal.ZERO);
+        response.put("khrBalance", wallet != null ? wallet.getKhrBalance() : BigDecimal.ZERO);
         response.put("isDefault", true);
         return ResponseEntity.ok(response);
     }
@@ -55,22 +58,8 @@ public class MobileWalletApiController {
         Wallet wallet = walletRepository.findByUserId(userId).orElse(null);
 
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("usdBalance", wallet != null ? wallet.getSavingsBalance() : new BigDecimal("120.00"));
-        response.put("khrBalance", wallet != null ? wallet.getSavingsKhrBalance() : new BigDecimal("500000.00"));
-        response.put("goalProgress", 60);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/wallet/goal")
-    @Operation(summary = "Get mobile goal wallet")
-    public ResponseEntity<Map<String, Object>> getGoalWallet(Authentication authentication) {
-        Long userId = getUserId(authentication);
-        Wallet wallet = walletRepository.findByUserId(userId).orElse(null);
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("usdBalance", wallet != null ? wallet.getGoalUsdBalance() : new BigDecimal("250.00"));
-        response.put("khrBalance", wallet != null ? wallet.getGoalKhrBalance() : new BigDecimal("1000000.00"));
-        response.put("goalName", "New Laptop");
+        response.put("usdBalance", wallet != null ? wallet.getSavingsBalance() : BigDecimal.ZERO);
+        response.put("khrBalance", wallet != null ? wallet.getSavingsKhrBalance() : BigDecimal.ZERO);
         return ResponseEntity.ok(response);
     }
 
@@ -215,11 +204,21 @@ public class MobileWalletApiController {
     }
 
     private Long resolveUserId(Authentication authentication, Long fallbackUserId) {
+        if (fallbackUserId != null) {
+            return fallbackUserId;
+        }
         if (authentication != null && authentication.getPrincipal() instanceof com.ewallet.user.entity.User u) {
             return u.getId();
         }
-        if (fallbackUserId != null) {
-            return fallbackUserId;
+        if (authentication != null && authentication.getName() != null) {
+            String name = authentication.getName();
+            com.ewallet.user.entity.User u = userRepository.findByPhoneNumber(name)
+                    .or(() -> userRepository.findByEmailIgnoreCase(name))
+                    .orElse(null);
+            if (u != null) return u.getId();
+            try {
+                return Long.parseLong(name);
+            } catch (NumberFormatException ignored) {}
         }
         return 1L;
     }

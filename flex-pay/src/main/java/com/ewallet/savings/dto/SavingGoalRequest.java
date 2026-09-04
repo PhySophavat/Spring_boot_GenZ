@@ -31,4 +31,6 @@ public class SavingGoalRequest {
     @NotNull(message = "Target date is required")
     @FutureOrPresent(message = "Target date cannot be in the past")
     private LocalDate targetDate;
+
+    private String description;
 }

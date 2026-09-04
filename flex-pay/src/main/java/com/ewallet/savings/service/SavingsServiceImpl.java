@@ -49,11 +49,11 @@ public class SavingsServiceImpl implements SavingsService {
     @Override
     @Transactional(readOnly = true)
     public SavingsSummaryResponse getSummary(Long userId) {
-        BigDecimal totalSavings = goalRepository.sumTotalSavingsByUserId(userId);
+        Wallet wallet = walletRepository.findByUserId(userId).orElse(null);
+        BigDecimal totalSavings = wallet != null ? wallet.getSavingsBalance() : BigDecimal.ZERO;
         long activeCount = goalRepository.countByUserIdAndStatus(userId, "ACTIVE");
         long completedCount = goalRepository.countByUserIdAndStatus(userId, "COMPLETED");
 
-        Wallet wallet = walletRepository.findByUserId(userId).orElse(null);
         BigDecimal walletBal = wallet != null ? wallet.getUsdBalance() : BigDecimal.ZERO;
 
         SavingStreak streak = streakRepository.findByUserId(userId).orElse(null);
@@ -106,6 +106,7 @@ public class SavingsServiceImpl implements SavingsService {
                 .targetAmount(request.getTargetAmount().setScale(4, RoundingMode.HALF_UP))
                 .currentAmount(BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP))
                 .targetDate(request.getTargetDate())
+                .description(request.getDescription() != null ? request.getDescription().trim() : null)
                 .status("ACTIVE")
                 .build();
 
@@ -146,6 +147,9 @@ public class SavingsServiceImpl implements SavingsService {
         if (request.getTargetDate() != null) {
             goal.setTargetDate(request.getTargetDate());
         }
+        if (request.getDescription() != null) {
+            goal.setDescription(request.getDescription().trim());
+        }
 
         SavingGoal updated = goalRepository.save(goal);
         return mapToGoalResponse(updated);
@@ -166,7 +170,8 @@ public class SavingsServiceImpl implements SavingsService {
             Wallet wallet = walletRepository.findByUserIdWithLock(userId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User wallet not found"));
 
-            wallet.setUsdBalance(wallet.getUsdBalance().add(refundAmt));
+            wallet.creditBalance("USD", "MAIN", refundAmt);
+            wallet.deductBalance("USD", "SAVINGS", refundAmt);
             walletRepository.save(wallet);
 
             SavingTransaction tx = SavingTransaction.builder()
@@ -213,8 +218,9 @@ public class SavingsServiceImpl implements SavingsService {
                             wallet.getUsdBalance(), amount));
         }
 
-        // 1. Deduct from Main Wallet
-        wallet.setUsdBalance(wallet.getUsdBalance().subtract(amount));
+        // 1. Deduct from Main Wallet, Credit to Savings Wallet
+        wallet.deductBalance("USD", "MAIN", amount);
+        wallet.creditBalance("USD", "SAVINGS", amount);
         walletRepository.save(wallet);
 
         // 2. Add to Goal
@@ -278,8 +284,9 @@ public class SavingsServiceImpl implements SavingsService {
         }
         SavingGoal savedGoal = goalRepository.save(goal);
 
-        // 2. Add back to Main Wallet
-        wallet.setUsdBalance(wallet.getUsdBalance().add(amount));
+        // 2. Add back to Main Wallet, Deduct from Savings Wallet
+        wallet.creditBalance("USD", "MAIN", amount);
+        wallet.deductBalance("USD", "SAVINGS", amount);
         walletRepository.save(wallet);
 
         // 3. Create SavingTransaction
@@ -307,6 +314,13 @@ public class SavingsServiceImpl implements SavingsService {
     public List<SavingTransactionResponse> getGoalTransactions(Long userId, Long goalId) {
         SavingGoal goal = getOwnedGoal(userId, goalId);
         List<SavingTransaction> list = transactionRepository.findByGoalIdOrderByCreatedAtDesc(goal.getId());
+        return list.stream().map(this::mapToTransactionResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SavingTransactionResponse> getAllTransactions(Long userId) {
+        List<SavingTransaction> list = transactionRepository.findByUserIdOrderByCreatedAtDesc(userId);
         return list.stream().map(this::mapToTransactionResponse).collect(Collectors.toList());
     }
 
@@ -505,6 +519,7 @@ public class SavingsServiceImpl implements SavingsService {
                 .progress(progress)
                 .remainingAmount(remaining.setScale(2, RoundingMode.HALF_UP))
                 .targetDate(goal.getTargetDate())
+                .description(goal.getDescription())
                 .status(goal.getStatus())
                 .createdAt(goal.getCreatedAt())
                 .updatedAt(goal.getUpdatedAt())

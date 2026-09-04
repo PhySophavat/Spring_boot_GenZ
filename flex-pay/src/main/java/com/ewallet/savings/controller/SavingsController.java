@@ -139,6 +139,17 @@ public class SavingsController {
         return ResponseEntity.ok(ApiResponse.ok(txs));
     }
 
+    @GetMapping("/transactions")
+    @Operation(summary = "Get all saving transactions for the authenticated user")
+    public ResponseEntity<ApiResponse<List<SavingTransactionResponse>>> getAllTransactions(
+            @AuthenticationPrincipal User principal,
+            Authentication authentication
+    ) {
+        Long userId = resolveUserId(principal, authentication);
+        List<SavingTransactionResponse> txs = savingsService.getAllTransactions(userId);
+        return ResponseEntity.ok(ApiResponse.ok(txs));
+    }
+
     @GetMapping("/streak")
     @Operation(summary = "Get saving streak, milestones, and weekly calendar")
     public ResponseEntity<ApiResponse<SavingStreakResponse>> getStreak(

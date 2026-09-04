@@ -22,8 +22,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
 @Transactional
+@Slf4j
 public class WalletServiceImpl implements WalletService {
 
     private static final int PIN_MAX_ATTEMPTS = 5;
@@ -33,17 +36,20 @@ public class WalletServiceImpl implements WalletService {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.ewallet.savings.repository.SavingGoalRepository savingGoalRepository;
 
     public WalletServiceImpl(
         UserRepository userRepository,
         WalletRepository walletRepository,
         TransactionRepository transactionRepository,
-        PasswordEncoder passwordEncoder
+        PasswordEncoder passwordEncoder,
+        com.ewallet.savings.repository.SavingGoalRepository savingGoalRepository
     ) {
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.passwordEncoder = passwordEncoder;
+        this.savingGoalRepository = savingGoalRepository;
     }
 
     @Override
@@ -193,8 +199,6 @@ public class WalletServiceImpl implements WalletService {
         );
         response.setSavingsBalance(wallet.getSavingsBalance());
         response.setSavingsKhrBalance(wallet.getSavingsKhrBalance());
-        response.setGoalUsdBalance(wallet.getGoalUsdBalance());
-        response.setGoalKhrBalance(wallet.getGoalKhrBalance());
         response.setPhoneNumber(wallet.getUser() != null ? wallet.getUser().getPhoneNumber() : "");
         return response;
     }
@@ -256,23 +260,68 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public void adminResetIndividualBalances() {
-        // Set distinct balances per user so they are no longer identical
-        java.util.Map<String, BigDecimal[]> balanceMap = new java.util.HashMap<>();
-        // walletNumber -> [savingsUSD, savingsKHR, goalUSD, goalKHR]
-        balanceMap.put("997548", new BigDecimal[]{ new BigDecimal("500.00"),  new BigDecimal("2000000"), new BigDecimal("250.00"),  new BigDecimal("1000000") });  // dev1
-        balanceMap.put("810201", new BigDecimal[]{ new BigDecimal("750.00"),  new BigDecimal("3000000"), new BigDecimal("400.00"),  new BigDecimal("1600000") });  // dev
-        balanceMap.put("8821",   new BigDecimal[]{ new BigDecimal("1000.00"), new BigDecimal("4000000"), new BigDecimal("600.00"),  new BigDecimal("2400000") });  // SOPHAVAT PHY
+    public WalletResponse transferBetweenWallets(Long userId, String fromType, String toType, BigDecimal amount, String currency) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be greater than zero");
+        }
 
+        String curr = (currency != null && currency.equalsIgnoreCase("KHR")) ? "KHR" : "USD";
+        boolean fromSavings = fromType != null && fromType.toUpperCase().contains("SAV");
+        boolean toSavings = toType != null && toType.toUpperCase().contains("SAV");
+
+        if (fromSavings == toSavings) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Source and destination wallet cannot be the same");
+        }
+
+        Wallet wallet = walletRepository.findByUserIdWithLock(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found"));
+
+        BigDecimal sourceBalance = wallet.getBalance(curr, fromSavings ? "SAVINGS" : "MAIN");
+        if (sourceBalance.compareTo(amount) < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance in " + (fromSavings ? "Savings" : "Main") + " Wallet (" + curr + ")");
+        }
+
+        // Atomically transfer funds internally
+        wallet.deductBalance(curr, fromSavings ? "SAVINGS" : "MAIN", amount);
+        wallet.creditBalance(curr, toSavings ? "SAVINGS" : "MAIN", amount);
+        walletRepository.save(wallet);
+
+        // Record audit transaction
+        Transaction tx = new Transaction();
+        tx.setSenderWallet(wallet);
+        tx.setReceiverWallet(wallet);
+        tx.setAmount(amount);
+        tx.setFee(BigDecimal.ZERO);
+        tx.setTotalAmount(amount);
+        tx.setCurrency(curr);
+        tx.setStatus("SUCCESS");
+        tx.setTransactionType(fromSavings ? "SAVING_WITHDRAW" : "SAVING_DEPOSIT");
+        tx.setNote((fromSavings ? "Withdrawal to Main Wallet" : "Deposit from Main Wallet") + " (" + curr + ")");
+        tx.setTransactionNo("INT" + System.currentTimeMillis() + (100 + new java.util.Random().nextInt(900)));
+        transactionRepository.save(tx);
+
+        return toResponse(wallet);
+    }
+
+    @Override
+    public void adminResetIndividualBalances() {
         walletRepository.findAll().forEach(wallet -> {
-            BigDecimal[] vals = balanceMap.get(wallet.getWalletNumber());
-            if (vals != null) {
-                wallet.setSavingsBalance(vals[0]);
-                wallet.setSavingsKhrBalance(vals[1]);
-                wallet.setGoalUsdBalance(vals[2]);
-                wallet.setGoalKhrBalance(vals[3]);
+            Long userId = wallet.getUser() != null ? wallet.getUser().getId() : null;
+            if (userId != null) {
+                BigDecimal totalGoalSavings = savingGoalRepository.sumTotalSavingsByUserId(userId);
+                wallet.setSavingsBalance(totalGoalSavings != null ? totalGoalSavings : BigDecimal.ZERO);
+                wallet.setSavingsKhrBalance(BigDecimal.ZERO);
                 walletRepository.save(wallet);
             }
         });
+    }
+
+    @jakarta.annotation.PostConstruct
+    public void syncSavingsWalletsWithGoals() {
+        try {
+            adminResetIndividualBalances();
+        } catch (Exception e) {
+            log.warn("Could not sync savings balances on startup: {}", e.getMessage());
+        }
     }
 }

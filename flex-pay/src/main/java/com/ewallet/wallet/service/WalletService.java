@@ -13,5 +13,6 @@ public interface WalletService {
     boolean verifyPin(Long userId, String pin);
     void changePin(Long userId, String currentPin, String newPin, String confirmPin);
     WalletResponse deposit(Long userId, DepositRequest request);
+    WalletResponse transferBetweenWallets(Long userId, String fromType, String toType, java.math.BigDecimal amount, String currency);
     void adminResetIndividualBalances();
 }

@@ -51,10 +51,8 @@ public class DataInitializer implements CommandLineRunner {
             wallet1.setWalletNumber("497548");
             wallet1.setUsdBalance(new BigDecimal("1000.00"));
             wallet1.setKhrBalance(new BigDecimal("100000.00"));
-            wallet1.setSavingsBalance(new BigDecimal("500.00"));
-            wallet1.setSavingsKhrBalance(new BigDecimal("2000000.00"));
-            wallet1.setGoalUsdBalance(new BigDecimal("250.00"));
-            wallet1.setGoalKhrBalance(new BigDecimal("1000000.00"));
+            wallet1.setSavingsBalance(BigDecimal.ZERO);
+            wallet1.setSavingsKhrBalance(BigDecimal.ZERO);
             wallet1.setStatus("ACTIVE");
             wallet1 = walletRepository.save(wallet1);
 
@@ -75,10 +73,8 @@ public class DataInitializer implements CommandLineRunner {
             wallet2.setWalletNumber("653498");
             wallet2.setUsdBalance(new BigDecimal("100.00"));
             wallet2.setKhrBalance(new BigDecimal("10000.00"));
-            wallet2.setSavingsBalance(new BigDecimal("500.00"));
-            wallet2.setSavingsKhrBalance(new BigDecimal("2000000.00"));
-            wallet2.setGoalUsdBalance(new BigDecimal("250.00"));
-            wallet2.setGoalKhrBalance(new BigDecimal("1000000.00"));
+            wallet2.setSavingsBalance(BigDecimal.ZERO);
+            wallet2.setSavingsKhrBalance(BigDecimal.ZERO);
             wallet2.setStatus("ACTIVE");
             wallet2 = walletRepository.save(wallet2);
 

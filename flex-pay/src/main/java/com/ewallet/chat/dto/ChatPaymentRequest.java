@@ -27,5 +27,8 @@ public class ChatPaymentRequest {
 
     private String message;
 
+    @Builder.Default
+    private String currency = "USD";
+
     private String idempotencyKey;
 }

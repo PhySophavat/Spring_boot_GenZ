@@ -13,6 +13,8 @@ public class CreateSplitBillRequest {
     @DecimalMin(value = "0.01", message = "Total amount must be greater than 0")
     private BigDecimal totalAmount;
 
+    private String currency = "USD"; // USD or KHR
+
     private String note;
 
     private String splitType = "EQUAL"; // EQUAL or CUSTOM
@@ -32,6 +34,14 @@ public class CreateSplitBillRequest {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public String getCurrency() {
+        return currency != null ? currency : "USD";
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency != null ? currency.toUpperCase() : "USD";
     }
 
     public String getNote() {

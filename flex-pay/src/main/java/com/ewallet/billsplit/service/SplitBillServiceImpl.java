@@ -83,6 +83,10 @@ public class SplitBillServiceImpl implements SplitBillService {
         SplitBill splitBill = new SplitBill();
         splitBill.setCreator(creator);
         splitBill.setTotalAmount(request.getTotalAmount());
+        String currency = (request.getCurrency() != null && !request.getCurrency().isBlank())
+                ? request.getCurrency().toUpperCase().trim()
+                : "USD";
+        splitBill.setCurrency(currency);
         splitBill.setNote(request.getNote() != null && !request.getNote().isBlank() ? request.getNote().trim() : "Dinner with Friends");
         splitBill.setStatus("PENDING");
 
@@ -138,7 +142,7 @@ public class SplitBillServiceImpl implements SplitBillService {
             }
 
             if (sumShares.compareTo(totalAmount) != 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amounts must equal the total bill ($" + totalAmount + ")");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amounts must equal the total bill (" + formatMoney(totalAmount, currency) + ")");
             }
 
             SplitBillMember creatorMember = new SplitBillMember();
@@ -159,13 +163,23 @@ public class SplitBillServiceImpl implements SplitBillService {
 
         SplitBill saved = splitBillRepository.save(splitBill);
 
+        // Dispatch notification to creator
+        Notification creatorNotif = new Notification();
+        creatorNotif.setUser(creator);
+        creatorNotif.setTitle("Split Pay Created");
+        creatorNotif.setMessage("You created a Split Pay for " + saved.getNote() + " (" + formatMoney(saved.getTotalAmount(), currency) + "). Requests sent to " + (saved.getMembers().size() - 1) + " friends.");
+        creatorNotif.setType("SPLIT_BILL_CREATED");
+        creatorNotif.setReferenceId(saved.getId());
+        creatorNotif.setIsRead(false);
+        notificationRepository.save(creatorNotif);
+
         // Dispatch notifications to friends
         for (SplitBillMember member : saved.getMembers()) {
             if (!member.getUser().getId().equals(creator.getId())) {
                 Notification notification = new Notification();
                 notification.setUser(member.getUser());
-                notification.setTitle("Payment Request");
-                notification.setMessage(creator.getFullName() + " requested $" + member.getAmount().setScale(2) + " from you for " + saved.getNote());
+                notification.setTitle("Split Pay Request");
+                notification.setMessage(creator.getFullName() + " requested " + formatMoney(member.getAmount(), currency) + " from you for " + saved.getNote());
                 notification.setType("SPLIT_BILL_REQUEST");
                 notification.setReferenceId(saved.getId());
                 notification.setIsRead(false);
@@ -253,14 +267,15 @@ public class SplitBillServiceImpl implements SplitBillService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Creator wallet is not active");
         }
 
+        String currency = splitBill.getCurrency() != null ? splitBill.getCurrency() : "USD";
         BigDecimal amount = member.getAmount();
-        if (payerWallet.getUsdBalance().compareTo(amount) < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient USD balance to pay $" + amount);
+        if (payerWallet.getBalance(currency, "MAIN").compareTo(amount) < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient " + currency + " balance in Main Wallet to pay " + formatMoney(amount, currency));
         }
 
         // Debit payer, Credit creator
-        payerWallet.setUsdBalance(payerWallet.getUsdBalance().subtract(amount));
-        creatorWallet.setUsdBalance(creatorWallet.getUsdBalance().add(amount));
+        payerWallet.deductBalance(currency, "MAIN", amount);
+        creatorWallet.creditBalance(currency, "MAIN", amount);
         walletRepository.save(payerWallet);
         walletRepository.save(creatorWallet);
 
@@ -272,10 +287,10 @@ public class SplitBillServiceImpl implements SplitBillService {
         tx.setAmount(amount);
         tx.setFee(BigDecimal.ZERO);
         tx.setTotalAmount(amount);
-        tx.setCurrency("USD");
+        tx.setCurrency(currency);
         tx.setStatus("SUCCESS");
         tx.setTransactionType("TRANSFER");
-        tx.setNote("Split Bill: " + splitBill.getNote());
+        tx.setNote("Split Pay: " + splitBill.getNote());
         Transaction savedTx = transactionRepository.save(tx);
 
         // Update member status
@@ -296,7 +311,7 @@ public class SplitBillServiceImpl implements SplitBillService {
             Notification completedNotif = new Notification();
             completedNotif.setUser(creator);
             completedNotif.setTitle("Split Completed");
-            completedNotif.setMessage("All friends have paid their share for " + splitBill.getNote());
+            completedNotif.setMessage("All friends have paid their share for " + splitBill.getNote() + " (" + formatMoney(splitBill.getTotalAmount(), currency) + " fully collected)");
             completedNotif.setType("SPLIT_BILL_COMPLETED");
             completedNotif.setReferenceId(splitBill.getId());
             completedNotif.setIsRead(false);
@@ -310,7 +325,7 @@ public class SplitBillServiceImpl implements SplitBillService {
         Notification paymentNotif = new Notification();
         paymentNotif.setUser(creator);
         paymentNotif.setTitle("Payment Received");
-        paymentNotif.setMessage(payerUser.getFullName() + " paid you $" + amount.setScale(2) + " for " + splitBill.getNote());
+        paymentNotif.setMessage(payerUser.getFullName() + " paid you " + formatMoney(amount, currency) + " for " + splitBill.getNote());
         paymentNotif.setType("SPLIT_BILL_PAYMENT_RECEIVED");
         paymentNotif.setReferenceId(splitBill.getId());
         paymentNotif.setIsRead(false);
@@ -332,6 +347,7 @@ public class SplitBillServiceImpl implements SplitBillService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot send reminders for completed or cancelled split bill");
         }
 
+        String currency = splitBill.getCurrency() != null ? splitBill.getCurrency() : "USD";
         List<SplitBillMember> pendingMembers = memberRepository.findBySplitBillId(splitBillId).stream()
                 .filter(m -> "PENDING".equals(m.getStatus()) && !m.getUser().getId().equals(creatorUserId))
                 .toList();
@@ -340,11 +356,20 @@ public class SplitBillServiceImpl implements SplitBillService {
             Notification reminder = new Notification();
             reminder.setUser(pending.getUser());
             reminder.setTitle("Payment Reminder");
-            reminder.setMessage("You still have a $" + pending.getAmount().setScale(2) + " Split Bill payment pending. Requested by " + splitBill.getCreator().getFullName());
+            reminder.setMessage("You still have a " + formatMoney(pending.getAmount(), currency) + " Split Pay payment pending. Requested by " + splitBill.getCreator().getFullName());
             reminder.setType("SPLIT_BILL_REMINDER");
             reminder.setReferenceId(splitBill.getId());
             reminder.setIsRead(false);
             notificationRepository.save(reminder);
+        }
+    }
+
+    private String formatMoney(BigDecimal amount, String currency) {
+        if (amount == null) return "0.00";
+        if ("KHR".equalsIgnoreCase(currency)) {
+            return String.format("%,d ៛", amount.longValue());
+        } else {
+            return String.format("$%.2f USD", amount.doubleValue());
         }
     }
 
@@ -401,6 +426,7 @@ public class SplitBillServiceImpl implements SplitBillService {
                 bill.getId(),
                 creatorMap,
                 bill.getTotalAmount(),
+                bill.getCurrency(),
                 bill.getNote(),
                 bill.getSplitType(),
                 bill.getStatus(),

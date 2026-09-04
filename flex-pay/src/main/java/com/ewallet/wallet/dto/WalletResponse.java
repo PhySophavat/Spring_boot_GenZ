@@ -14,11 +14,9 @@ public class WalletResponse {
     private String fullName;
     private String phoneNumber;
     private BigDecimal usdBalance;
+    private BigDecimal khrBalance;
     private BigDecimal savingsBalance;
     private BigDecimal savingsKhrBalance;
-    private BigDecimal goalUsdBalance;
-    private BigDecimal goalKhrBalance;
-    private BigDecimal khrBalance;
     private String status;
     private boolean hasPin;
     private List<TransactionResponse> recentTransactions;
@@ -44,139 +42,48 @@ public class WalletResponse {
     }
 
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
-    public Long getUserId() {
-        return userId;
-    }
+    public String getWalletId() { return walletId; }
+    public void setWalletId(String walletId) { this.walletId = walletId; }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+    public String getWalletNumber() { return walletNumber; }
+    public void setWalletNumber(String walletNumber) { this.walletNumber = walletNumber; }
 
-    public String getWalletId() {
-        return walletId;
-    }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public void setWalletId(String walletId) {
-        this.walletId = walletId;
-    }
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
-    public String getWalletNumber() {
-        return walletNumber;
-    }
+    public BigDecimal getUsdBalance() { return usdBalance; }
+    public void setUsdBalance(BigDecimal usdBalance) { this.usdBalance = usdBalance; }
 
-    public void setWalletNumber(String walletNumber) {
-        this.walletNumber = walletNumber;
-    }
+    public BigDecimal getKhrBalance() { return khrBalance; }
+    public void setKhrBalance(BigDecimal khrBalance) { this.khrBalance = khrBalance; }
 
-    public String getFullName() {
-        return fullName;
-    }
+    public BigDecimal getSavingsBalance() { return savingsBalance; }
+    public void setSavingsBalance(BigDecimal savingsBalance) { this.savingsBalance = savingsBalance; }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
+    public BigDecimal getSavingsKhrBalance() { return savingsKhrBalance; }
+    public void setSavingsKhrBalance(BigDecimal savingsKhrBalance) { this.savingsKhrBalance = savingsKhrBalance; }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
+    public boolean isHasPin() { return hasPin; }
+    public void setHasPin(boolean hasPin) { this.hasPin = hasPin; }
 
-    public BigDecimal getUsdBalance() {
-        return usdBalance;
-    }
+    public List<TransactionResponse> getRecentTransactions() { return recentTransactions; }
+    public void setRecentTransactions(List<TransactionResponse> recentTransactions) { this.recentTransactions = recentTransactions; }
 
-    public void setUsdBalance(BigDecimal usdBalance) {
-        this.usdBalance = usdBalance;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public BigDecimal getSavingsBalance() {
-        return savingsBalance;
-    }
-
-    public void setSavingsBalance(BigDecimal savingsBalance) {
-        this.savingsBalance = savingsBalance;
-    }
-
-    public BigDecimal getSavingsKhrBalance() {
-        return savingsKhrBalance;
-    }
-
-    public void setSavingsKhrBalance(BigDecimal savingsKhrBalance) {
-        this.savingsKhrBalance = savingsKhrBalance;
-    }
-
-    public BigDecimal getGoalUsdBalance() {
-        return goalUsdBalance;
-    }
-
-    public void setGoalUsdBalance(BigDecimal goalUsdBalance) {
-        this.goalUsdBalance = goalUsdBalance;
-    }
-
-    public BigDecimal getGoalKhrBalance() {
-        return goalKhrBalance;
-    }
-
-    public void setGoalKhrBalance(BigDecimal goalKhrBalance) {
-        this.goalKhrBalance = goalKhrBalance;
-    }
-
-    public BigDecimal getKhrBalance() {
-        return khrBalance;
-    }
-
-    public void setKhrBalance(BigDecimal khrBalance) {
-        this.khrBalance = khrBalance;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public boolean isHasPin() {
-        return hasPin;
-    }
-
-    public void setHasPin(boolean hasPin) {
-        this.hasPin = hasPin;
-    }
-
-    public List<TransactionResponse> getRecentTransactions() {
-        return recentTransactions;
-    }
-
-    public void setRecentTransactions(List<TransactionResponse> recentTransactions) {
-        this.recentTransactions = recentTransactions;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
