@@ -1,6 +1,7 @@
 package com.ewallet.auth.service;
 
 import com.ewallet.auth.dto.*;
+import com.ewallet.auth.entity.OtpPurpose;
 import com.ewallet.common.security.JwtService;
 import com.ewallet.user.dto.UserRegistrationRequest;
 import com.ewallet.user.dto.UserResponse;
@@ -28,6 +29,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final QrCodeService qrCodeService;
+    private final EmailService emailService;
+    private final OtpService otpService;
 
     public AuthService(
         UserService userService,
@@ -35,7 +38,9 @@ public class AuthService {
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
         JwtService jwtService,
-        QrCodeService qrCodeService
+        QrCodeService qrCodeService,
+        EmailService emailService,
+        OtpService otpService
     ) {
         this.userService = userService;
         this.walletService = walletService;
@@ -43,6 +48,8 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.qrCodeService = qrCodeService;
+        this.emailService = emailService;
+        this.otpService = otpService;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -143,6 +150,55 @@ public class AuthService {
     public void changePin(Authentication authentication, String currentPin, String newPin, String confirmPin) {
         User user = getAuthenticatedUser(authentication);
         walletService.changePin(user.getId(), currentPin, newPin, confirmPin);
+    }
+
+    public void sendRegistrationOtp(String email, String phoneNumber) {
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+        if (userRepository.existsByEmailIgnoreCase(email.trim())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered");
+        }
+        if (phoneNumber != null && !phoneNumber.isBlank() && userRepository.existsByPhoneNumber(phoneNumber.trim())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone number is already registered");
+        }
+
+        String otp = otpService.generateAndSaveOtp(email, OtpPurpose.REGISTRATION);
+        try {
+            emailService.sendOtpEmail(email.trim(), otp);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send OTP email: " + e.getMessage());
+        }
+    }
+
+    public void forgotPassword(String email) {
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+        User user = userRepository.findByEmailIgnoreCase(email.trim())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No user found with email: " + email));
+
+        String otp = otpService.generateAndSaveOtp(email, OtpPurpose.FORGOT_PASSWORD);
+        try {
+            emailService.sendOtpEmail(email.trim(), otp);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send OTP email: " + e.getMessage());
+        }
+    }
+
+    public void resetPassword(ResetPasswordRequest request) {
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwords do not match");
+        }
+
+        // Verify OTP for FORGOT_PASSWORD
+        otpService.verifyOtp(request.email(), request.otp(), OtpPurpose.FORGOT_PASSWORD);
+
+        User user = userRepository.findByEmailIgnoreCase(request.email().trim())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with email: " + request.email()));
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
     }
 
     private User getAuthenticatedUser(Authentication authentication) {

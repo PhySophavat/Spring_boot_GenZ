@@ -21,3 +21,8 @@ frontend/*.log
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local secrets & configs
+.env
+application-local.properties
+

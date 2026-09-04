@@ -11,24 +11,101 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import com.ewallet.auth.entity.OtpPurpose;
+import com.ewallet.auth.service.OtpService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Map;
+
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api/auth")
-@Tag(name = "Authentication", description = "Register and login with phone number and password")
+@Tag(name = "Authentication", description = "Register, OTP verification, password reset, and login")
 public class AuthController {
 
     private final AuthService authService;
+    private final OtpService otpService;
 
-    public AuthController(AuthService authService) {
+    @Value("${app.auth.otp-required:true}")
+    private boolean otpRequired;
+
+    public AuthController(AuthService authService, OtpService otpService) {
         this.authService = authService;
+        this.otpService = otpService;
     }
 
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Register a user")
+    @Operation(summary = "Register a user with OTP verification")
     @SecurityRequirements
-    public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
-        return authService.register(request);
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        // If OTP requirement is active and OTP code has not been submitted yet, send OTP email
+        if (otpRequired && (request.otp() == null || request.otp().isBlank())) {
+            authService.sendRegistrationOtp(request.email(), request.phoneNumber());
+            return ResponseEntity.ok(Map.of(
+                "message", "OTP sent",
+                "email", request.email(),
+                "otpRequired", true
+            ));
+        }
+
+        // If OTP is provided and OTP is required, verify OTP first
+        if (otpRequired) {
+            otpService.verifyOtp(request.email(), request.otp(), OtpPurpose.REGISTRATION);
+        }
+
+        AuthResponse response = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/send-otp")
+    @Operation(summary = "Send OTP code to email")
+    @SecurityRequirements
+    public ResponseEntity<?> sendOtp(@Valid @RequestBody SendOtpRequest request) {
+        OtpPurpose purpose = request.purpose() != null ? request.purpose() : OtpPurpose.REGISTRATION;
+        if (purpose == OtpPurpose.FORGOT_PASSWORD) {
+            authService.forgotPassword(request.email());
+        } else {
+            authService.sendRegistrationOtp(request.email(), null);
+        }
+        return ResponseEntity.ok(Map.of("message", "OTP sent", "email", request.email()));
+    }
+
+    @PostMapping("/verify-otp")
+    @Operation(summary = "Verify OTP code")
+    @SecurityRequirements
+    public ResponseEntity<?> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        OtpPurpose purpose = request.purpose() != null ? request.purpose() : OtpPurpose.REGISTRATION;
+        otpService.verifyOtp(request.email(), request.otp(), purpose);
+        return ResponseEntity.ok(Map.of("valid", true, "message", "OTP verified successfully"));
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Request OTP for forgotten password")
+    @SecurityRequirements
+    public ResponseEntity<?> forgotPassword(
+        @RequestParam(required = false) String email,
+        @RequestBody(required = false) ForgotPasswordRequest body
+    ) {
+        String targetEmail = (email != null && !email.isBlank())
+            ? email.trim()
+            : (body != null ? body.email().trim() : null);
+
+        if (targetEmail == null || targetEmail.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+
+        authService.forgotPassword(targetEmail);
+        return ResponseEntity.ok(Map.of("message", "OTP sent", "email", targetEmail));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password using OTP")
+    @SecurityRequirements
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
     }
 
     @PostMapping("/login")

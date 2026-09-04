@@ -22,6 +22,21 @@ public record RegisterRequest(
     String password,
 
     @NotBlank(message = "Confirm password is required")
-    String confirmPassword
+    String confirmPassword,
+
+    String otp
 ) {
+    public RegisterRequest(
+        String fullName,
+        String phoneNumber,
+        String email,
+        String password,
+        String confirmPassword
+    ) {
+        this(fullName, phoneNumber, email, password, confirmPassword, null);
+    }
+
+    public String getEmail() {
+        return email;
+    }
 }

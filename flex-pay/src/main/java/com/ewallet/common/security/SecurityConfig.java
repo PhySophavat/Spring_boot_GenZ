@@ -38,7 +38,14 @@ public class SecurityConfig {
                 exception.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
                 // Auth endpoints
-                .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                .requestMatchers(
+                    "/api/auth/register",
+                    "/api/auth/login",
+                    "/api/auth/forgot-password",
+                    "/api/auth/reset-password",
+                    "/api/auth/send-otp",
+                    "/api/auth/verify-otp"
+                ).permitAll()
                 // Swagger / OpenAPI
                 .requestMatchers(
                     "/v3/api-docs",
